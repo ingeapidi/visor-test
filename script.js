@@ -1,10 +1,5 @@
-// --- CONFIGURACIÓN CON SALTO DE ADVERTENCIA NGROK ---
 const API_URL = "https://subepiglottic-hypobaric-lesha.ngrok-free.dev";
-
-// Encabezado obligatorio para evitar la pantalla de advertencia de ngrok
-const headersNgrok = {
-    'ngrok-skip-browser-warning': 'true'
-};
+const headersNgrok = { 'ngrok-skip-browser-warning': 'true' };
 
 const map = new maplibregl.Map({
     container: 'map',
@@ -14,40 +9,29 @@ const map = new maplibregl.Map({
 
 const uppy = new Uppy.Uppy({ restrictions: { allowedFileTypes: ['.tif', '.tiff'] }})
     .use(Uppy.Dashboard, { inline: true, target: '#drag-drop-area', height: 300 })
-    .use(Uppy.XHRUpload, { 
-        endpoint: `${API_URL}/upload`, 
-        fieldName: 'files[]',
-        headers: headersNgrok // Añadimos el salto aquí
-    });
+    .use(Uppy.XHRUpload, { endpoint: `${API_URL}/upload`, fieldName: 'files[]', headers: headersNgrok });
 
-// ESCALA DE COLORES IDÉNTICA A TU IMAGEN (Global Mapper Style)
+// RAMPA DE COLOR TÉRMICA PARA MDT (Estilo Global Mapper)
 function colorRamp(val, min, max) {
     if (val === -9999 || isNaN(val)) return [0,0,0,0];
     const r = Math.min(1, Math.max(0, (val - min) / (max - min)));
-    
     let red, green, blue;
-    // Escala multi-nodo: Azul -> Cian -> Verde -> Amarillo -> Naranja -> Rojo
-    if (r < 0.2) { // Azul a Cian
-        red = 0; green = Math.floor(r * 5 * 255); blue = 255;
-    } else if (r < 0.4) { // Cian a Verde
-        red = 0; green = 255; blue = Math.floor((0.4 - r) * 5 * 255);
-    } else if (r < 0.6) { // Verde a Amarillo
-        red = Math.floor((r - 0.4) * 5 * 255); green = 255; blue = 0;
-    } else if (r < 0.8) { // Amarillo a Naranja
-        red = 255; green = Math.floor((0.8 - r) * 5 * 255 + 128); blue = 0;
-    } else { // Naranja a Rojo
-        red = 255; green = Math.floor((1 - r) * 5 * 128); blue = 0;
-    }
+    if (r < 0.2) { red = 0; green = Math.floor(r * 5 * 255); blue = 255; }
+    else if (r < 0.4) { red = 0; green = 255; blue = Math.floor((0.4 - r) * 5 * 255); }
+    else if (r < 0.6) { red = Math.floor((r - 0.4) * 5 * 255); green = 255; blue = 0; }
+    else if (r < 0.8) { red = 255; green = Math.floor((0.8 - r) * 5 * 255 + 128); blue = 0; }
+    else { red = 255; green = Math.floor((1 - r) * 5 * 128); blue = 0; }
     return [red, green, blue, 255];
 }
 
 async function visualizar(filename, tipo, minZ, maxZ) {
     const base = filename.split('.')[0];
-    // Agregamos el header también en la descarga de datos
     const url = `${API_URL}/data/cog_${base}.tif?t=${Date.now()}`;
     const tiff = await GeoTIFF.fromUrl(url, { headers: headersNgrok });
     const image = await tiff.getImage();
     const bbox = image.getBoundingBox();
+    
+    // Leemos los canales: MDT tendrá 1 solo, Orto tendrá 3 o más
     const rasters = await image.readRasters({ width: 1024, height: 1024 });
     
     const canvas = document.createElement('canvas');
@@ -56,8 +40,16 @@ async function visualizar(filename, tipo, minZ, maxZ) {
     const imgData = ctx.createImageData(canvas.width, canvas.height);
 
     for (let i = 0; i < rasters[0].length; i++) {
-        let c = tipo === "MDT" ? colorRamp(rasters[0][i], minZ, maxZ) : [rasters[0][i], rasters[1][i], rasters[2][i], (rasters[0][i] === 0 ? 0 : 255)];
-        imgData.data[i*4]=c[0]; imgData.data[i*4+1]=c[1]; imgData.data[i*4+2]=c[2]; imgData.data[i*4+3]=c[3];
+        let c;
+        if (tipo === "MDT") {
+            c = colorRamp(rasters[0][i], minZ, maxZ);
+        } else {
+            // Caso ORTOMOSAICO: Leemos RGB original
+            const r = rasters[0][i], g = rasters[1][i], b = rasters[2][i];
+            c = (r === 0 && g === 0 && b === 0) ? [0,0,0,0] : [r, g, b, 255];
+        }
+        const idx = i * 4;
+        imgData.data[idx]=c[0]; imgData.data[idx+1]=c[1]; imgData.data[idx+2]=c[2]; imgData.data[idx+3]=c[3];
     }
     ctx.putImageData(imgData, 0, 0);
 
@@ -69,17 +61,24 @@ async function visualizar(filename, tipo, minZ, maxZ) {
 }
 
 async function actualizarLista() {
-    // Agregamos headersNgrok a todas las peticiones fetch
     const res = await fetch(`${API_URL}/list-files`, { headers: headersNgrok });
     const archivos = await res.json();
-    document.getElementById('file-list').innerHTML = archivos.map(a => `
+    document.getElementById('file-list').innerHTML = archivos.map(a => {
+        const base = a.name.split('.')[0];
+        // Si es Ortomosaico, habilitamos botón JP2. Si es MDT, solo TIF
+        const btnDownload = a.tipo === "ORTOMOSAICO" 
+            ? `<a href="${API_URL}/data/calidad_${base}.jp2" class="btn-dl" style="background:#8e44ad">JP2</a>`
+            : `<a href="${API_URL}/data/${a.name}" class="btn-dl">TIF</a>`;
+            
+        return `
         <li class="file-item">
-            <div><strong>${a.name}</strong><br><small>${a.tipo === 'MDT' ? `Z: ${a.min_z}-${a.max_z}m` : 'Imagen RGB'}</small></div>
+            <div><strong>${a.name}</strong><br><small>${a.tipo === 'MDT' ? `MDT (${a.min_z}-${a.max_z}m)` : 'Ortomosaico RGB'}</small></div>
             <div>
                 <button onclick="visualizar('${a.name}','${a.tipo}',${a.min_z},${a.max_z})">📍</button>
-                <a href="${API_URL}/data/${a.name}" class="btn-dl">TIF</a>
+                ${btnDownload}
             </div>
-        </li>`).join('');
+        </li>`;
+    }).join('');
 }
 
 uppy.on('complete', (res) => {
