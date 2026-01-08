@@ -2,30 +2,30 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>GeoPortal Cloud Pro</title>
+    <title>GIS Cloud Engine Pro</title>
     <link href="https://releases.transloadit.com/uppy/v3.0.0/uppy.min.css" rel="stylesheet">
     <link href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css" rel="stylesheet">
     <style>
-        body { display: flex; height: 100vh; margin: 0; font-family: sans-serif; }
-        #sidebar { width: 400px; padding: 20px; border-right: 1px solid #ddd; overflow-y: auto; display: flex; flex-direction: column; }
-        #map { flex: 1; }
+        body { display: flex; height: 100vh; margin: 0; font-family: 'Segoe UI', sans-serif; }
+        #sidebar { width: 380px; padding: 20px; border-right: 1px solid #ddd; display: flex; flex-direction: column; }
+        #map { flex: 1; background: #eee; }
         .file-item { display: flex; background: #f8f9fa; margin-bottom: 8px; padding: 12px; border-radius: 6px; align-items: center; justify-content: space-between; }
-        .btn-dl { background: #2c3e50; color: white; padding: 5px 10px; text-decoration: none; border-radius: 4px; font-size: 11px; }
+        .btn-dl { background: #2c3e50; color: white; padding: 5px 10px; text-decoration: none; border-radius: 4px; font-size: 11px; margin-left: 5px; }
+        button { cursor: pointer; border: 1px solid #ddd; background: white; padding: 6px 10px; border-radius: 4px; }
         .ramp { height: 12px; background: linear-gradient(to right, blue, cyan, green, yellow, red); border-radius: 6px; margin: 10px 0; }
     </style>
 </head>
 <body>
     <div id="sidebar">
-        <h2 style="color:#1a73e8;">GIS Cloud Engine</h2>
+        <h2>GIS Cloud Engine</h2>
         <div id="drag-drop-area"></div>
-        <p id="status-text" style="color:#28a745; font-weight:bold;">Listo para trabajar.</p>
-        <ul id="file-list" style="list-style:none; padding:0; flex-grow:1;"></ul>
-        <div class="legend">
-            <strong>Escala de Elevación Dinámica</strong>
+        <p id="status-text" style="color:#28a745; font-weight:bold; margin-top:15px;">Sistema listo.</p>
+        <h3 style="border-bottom: 1px solid #eee; padding-bottom:5px;">Capas Procesadas</h3>
+        <ul id="file-list" style="list-style:none; padding:0; flex-grow:1; overflow-y:auto;"></ul>
+        <div class="legend" style="margin-top:20px; padding:10px; background:#f1f1f1; border-radius:8px;">
+            <strong>Referencia MDT</strong>
             <div class="ramp"></div>
-            <div style="display:flex; justify-content:space-between; font-size:11px; color:#666;">
-                <span>Mínimo (Z)</span><span>Máximo (Z)</span>
-            </div>
+            <div style="display:flex; justify-content:space-between; font-size:10px;"><span>Bajo</span><span>Alto</span></div>
         </div>
     </div>
     <div id="map"></div>
