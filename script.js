@@ -1,5 +1,5 @@
 // REEMPLAZA ESTO CON TU DOMINIO ESTATICO DE NGROK
-const API_URL = "https://tu-nombre.ngrok-free.app";
+const API_URL = "subepiglottic-hypobaric-lesha.ngrok-free.dev";
 
 const map = new maplibregl.Map({
     container: 'map',
