@@ -5,26 +5,19 @@
     <title>Nuevo Proyecto - Geoportal Cloud</title>
     <link rel="stylesheet" href="css/styles.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        .form-container { max-width: 800px; margin: 40px auto; padding: 0 20px; }
-        .upload-zone { border: 2px dashed var(--accent); background: #eff6ff; padding: 40px; border-radius: 12px; text-align: center; margin-top: 20px; cursor: pointer; }
-        .upload-zone:hover { background: #dbeafe; }
-        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 20px; font-family: inherit; }
-        label { font-size: 0.75rem; font-weight: 800; color: var(--text-slate); text-transform: uppercase; margin-bottom: 8px; display: block; }
-    </style>
 </head>
 <body>
     <header>
         <a href="inicio.html" class="logo"><i class="fas fa-satellite-dish"></i> GEOPORTAL CLOUD</a>
-        <a href="admin.html" style="color:white; text-decoration:none;"><i class="fas fa-tachometer-alt"></i> Panel Control</a>
+        <a href="admin.html" class="user-access" style="color:white; text-decoration:none;"><i class="fas fa-tachometer-alt"></i> Panel</a>
     </header>
 
     <div class="form-container">
-        <a href="admin.html" style="display:inline-block; margin-bottom:20px; color:var(--accent); font-weight:bold; text-decoration:none;">← Volver al Dashboard</a>
+        <a href="admin.html" style="display:inline-block; margin-bottom:20px; color:var(--accent); font-weight:bold;">← Volver al Dashboard</a>
         
         <div class="card">
             <h2>Configurar Nuevo Proyecto</h2>
-            <p style="color:var(--text-slate); margin-bottom:30px;">Defina el espacio de trabajo y cargue los insumos técnicos (Máx. 1GB por archivo).</p>
+            <p style="color:var(--text-slate); margin-bottom:30px;">Defina el espacio de trabajo y cargue los insumos técnicos.</p>
             
             <label>Espacio de Trabajo</label>
             <select>
@@ -34,19 +27,17 @@
             </select>
 
             <label>Nombre del Proyecto</label>
-            <input type="text" placeholder="Ej: Control Stock Cantera 1">
-
-            <label>Cliente / Mandante</label>
-            <input type="text" placeholder="Empresa minera o constructora">
+            <input type="text" placeholder="Ej: Relevamiento Dique 4 - Fase 2">
 
             <label>Archivos del Relevamiento (TIF, LAS, DXF)</label>
-            <div class="upload-zone">
+            <div class="upload-zone" onclick="alert('Buscador de archivos abierto...')">
                 <i class="fas fa-cloud-upload-alt" style="font-size: 2.5rem; color: var(--accent); margin-bottom: 10px;"></i>
                 <p>Arrastre sus archivos aquí o haga clic para buscar</p>
-                <div style="margin-top:10px; font-size:0.7rem; color:var(--text-slate);">Soportado: GeoTIFF, LAS/LAZ, DXF</div>
             </div>
 
-            <button class="btn btn-primary" style="width:100%; margin-top:30px; justify-content:center;" onclick="alert('Proyecto registrado con éxito. Iniciando carga...'); window.location.href='admin.html'">CREAR PROYECTO Y EMPEZAR SUMINISTRO</button>
+            <button class="btn btn-primary" style="width:100%; margin-top:30px; justify-content:center;" onclick="location.href='admin.html'">
+                CREAR PROYECTO Y EMPEZAR CARGA
+            </button>
         </div>
     </div>
 </body>
