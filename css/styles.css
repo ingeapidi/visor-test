@@ -107,11 +107,11 @@ main { display: flex; flex-grow: 1; overflow: hidden; position: relative; }
 
 .tree-sub-item { padding-left: 45px; font-size: 0.8rem; opacity: 0.7; }
 
-.tree-item.active { 
-    background: var(--accent); 
-    color: white; 
-    opacity: 1; 
-    font-weight: bold; 
+.tree-item.active {
+    background-color: rgba(37, 99, 235, 0.1); /* Azul suave */
+    color: var(--accent); /* Tu color azul principal */
+    border-right: 3px solid var(--accent);
+    font-weight: bold;
 }
 
 /* --- COMPONENTES UI (CARDS, BOTONES) --- */
