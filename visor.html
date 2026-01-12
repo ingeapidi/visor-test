@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Visor WebGIS - Geoportal Cloud</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css" rel="stylesheet">
+    <style>
+        body { height: 100vh; display: flex; flex-direction: column; overflow: hidden; background: #0f172a; }
+        main { display: flex; flex-grow: 1; }
+        #map { flex-grow: 1; position: relative; }
+        .gis-sidebar { width: 260px; background: #1e293b; color: white; padding: 20px; overflow-y: auto; }
+        .layer-control { background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 0.85rem; }
+        footer { height: 30px; background: black; color: #94a3b8; display: flex; align-items: center; padding: 0 20px; font-size: 0.7rem; gap: 20px; }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="inicio.html" class="logo"><i class="fas fa-satellite-dish"></i> GEOPORTAL CLOUD</a>
+        <a href="admin.html" class="btn" style="color:white; border:1px solid #475569;">Dashboard</a>
+    </header>
+
+    <main>
+        <aside class="gis-sidebar">
+            <h4 style="margin-top:0;">Capas del Proyecto</h4>
+            <div class="layer-control">
+                <input type="checkbox" checked> Ortomosaico RGB
+            </div>
+            <div class="layer-control">
+                <input type="checkbox"> MDT (Elevación)
+            </div>
+            <hr style="opacity:0.1; margin:20px 0;">
+            <h4>Herramientas</h4>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <button class="btn btn-primary" title="Medir Distancia"><i class="fas fa-ruler"></i></button>
+                <button class="btn btn-primary" title="Perfil de Elevación"><i class="fas fa-chart-line"></i></button>
+            </div>
+        </aside>
+
+        <div id="map"></div>
+    </main>
+
+    <footer>
+        <span>COORDS: -31.643, -60.712</span>
+        <span>ELEVACIÓN Z: 64.2 m</span>
+        <span style="margin-left:auto;">SISTEMA: EPSG 5346 (POSGAR 07/4)</span>
+    </footer>
+
+    <script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
+    <script>
+        const map = new maplibregl.Map({
+            container: 'map',
+            style: 'https://demotiles.maplibre.org/style.json', // Mapa base temporal
+            center: [-60.712, -31.643],
+            zoom: 15
+        });
+    </script>
+</body>
+</html>
