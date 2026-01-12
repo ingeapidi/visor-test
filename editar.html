@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestionar Proyecto - Geoportal Cloud</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .progress-container { width: 100%; background: #e2e8f0; border-radius: 10px; margin: 10px 0; display: none; }
+        .progress-bar { height: 10px; background: var(--accent); width: 0%; border-radius: 10px; transition: width 0.3s; }
+        .file-row:hover { background: #f8fafc; }
+        .sidebar-edit { background: white; padding: 25px; border-right: 1px solid #e2e8f0; }
+    </style>
+</head>
+<body>
+<header>
+    <div class="logo" onclick="location.href='admin.html'"><i class="fas fa-satellite-dish"></i> GEOPORTAL CLOUD</div>
+    <div class="project-title">GESTIÓN DE PROYECTO</div>
+    <div class="user-access"><i class="fas fa-user-circle" style="font-size: 1.5rem;"></i></div>
+</header>
+
+<main>
+    <aside class="sidebar sidebar-edit" style="width: 350px;">
+        <h3 style="margin-top:0;">Configuración General</h3>
+        <label>Nombre del Proyecto</label>
+        <input type="text" id="editNombre">
+        
+        <label>Cliente</label>
+        <input type="text" id="editCliente">
+        
+        <label>Ubicación</label>
+        <input type="text" id="editUbicacion">
+
+        <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="guardarCambiosProyecto()">
+            <i class="fas fa-save"></i> GUARDAR CAMBIOS
+        </button>
+
+        <hr style="margin: 30px 0; opacity: 0.1;">
+        
+        <div class="stats-card" style="font-size: 0.85rem; color: var(--text-slate);">
+            <p><i class="fas fa-clock"></i> Última sincronización:<br><span id="txt-ultima-sinc">---</span></p>
+            <p><i class="fas fa-database"></i> Archivos totales: <span id="txt-conteo-archivos">0</span></p>
+        </div>
+        
+        <button class="btn btn-outline" style="width:100%; margin-top:20px; color: var(--accent);" id="btn-ir-visor">
+            <i class="fas fa-external-link-alt"></i> IR AL VISOR
+        </button>
+    </aside>
+
+    <div class="container-scroll" style="background: #f8fafc;">
+        <div class="card">
+            <h3>Archivos y Capas Vinculadas</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nombre del Archivo</th>
+                        <th>Tipo</th>
+                        <th>Fecha de Carga</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-archivos">
+                    <tr><td colspan="4" style="text-align:center;">Cargando archivos...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card">
+            <h3>Cargar Nuevo Insumo (TIF, LAS, DXF)</h3>
+            <div class="upload-zone" id="dropzone" onclick="document.getElementById('fileInput').click()">
+                <i class="fas fa-cloud-upload-alt" style="font-size: 3rem; color: var(--accent);"></i>
+                <p>Arrastre archivos aquí o haga clic para seleccionar</p>
+                <input type="file" id="fileInput" style="display:none" onchange="gestionarSubida(this.files[0])">
+            </div>
+            
+            <div id="upload-status" style="margin-top:15px; display:none;">
+                <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:5px;">
+                    <span id="upload-filename">archivo.tif</span>
+                    <span id="upload-perc">0%</span>
+                </div>
+                <div class="progress-container" style="display:block;">
+                    <div class="progress-bar" id="bar-progreso"></div>
+                </div>
+                <p id="upload-msg" style="font-size:0.75rem; color:var(--accent);">Subiendo a Google Drive...</p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/api.js"></script>
+
+<script>
+    let proyectoId = new URLSearchParams(window.location.search).get('id');
+
+    async function cargarDetalles() {
+        if (!proyectoId) return window.location.href = 'admin.html';
+        
+        // Carga proyecto + archivos vinculados
+        const { data: proyecto, error } = await supabase
+            .from('proyectos')
+            .select('*, archivos(*)')
+            .eq('id', proyectoId)
+            .single();
+
+        if (error) return console.error(error);
+
+        // Rellenar Formulario
+        document.getElementById('editNombre').value = proyecto.nombre;
+        document.getElementById('editCliente').value = proyecto.cliente || "";
+        document.getElementById('editUbicacion').value = proyecto.ubicacion || "";
+        document.getElementById('txt-ultima-sinc').innerText = new Date(proyecto.ultima_actualizacion).toLocaleString();
+        document.getElementById('txt-conteo-archivos').innerText = proyecto.archivos.length;
+        document.getElementById('btn-ir-visor').onclick = () => location.href=`visor.html?id=${proyecto.id}`;
+
+        renderizarArchivos(proyecto.archivos);
+    }
+
+    function renderizarArchivos(archivos) {
+        const tbody = document.getElementById('tabla-archivos');
+        if (archivos.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No hay archivos asociados.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = archivos.map(a => `
+            <tr class="file-row">
+                <td><i class="fas fa-file-alt"></i> ${a.nombre_real}</td>
+                <td><span class="status-highlight" style="background:none;">${a.tipo.toUpperCase()}</span></td>
+                <td>${new Date(a.fecha_sincronizacion).toLocaleDateString()}</td>
+                <td>
+                    <button class="btn btn-outline" style="padding:5px; border-color:var(--error); color:var(--error);" onclick="eliminarArchivo('${a.id}', '${a.drive_id}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    async function guardarCambiosProyecto() {
+        const { error } = await supabase
+            .from('proyectos')
+            .update({
+                nombre: document.getElementById('editNombre').value,
+                cliente: document.getElementById('editCliente').value,
+                ubicacion: document.getElementById('editUbicacion').value,
+                ultima_actualizacion: new Date()
+            })
+            .eq('id', proyectoId);
+
+        if (error) alert("Error al actualizar: " + error.message);
+        else alert("Datos del proyecto actualizados.");
+    }
+
+    // LÓGICA DE SUBIDA CON BARRA DE PROGRESO
+    async function gestionarSubida(file) {
+        if (!file) return;
+        
+        const statusDiv = document.getElementById('upload-status');
+        const bar = document.getElementById('bar-progreso');
+        const percTxt = document.getElementById('upload-perc');
+        const fileTxt = document.getElementById('upload-filename');
+
+        statusDiv.style.display = 'block';
+        fileTxt.innerText = file.name;
+        
+        try {
+            // 1. Convertir archivo a Base64 para enviarlo a GAS
+            // En un sistema real de producción usaríamos bloques (chunks), 
+            // pero para este prototipo usaremos el FileReader.
+            const reader = new FileReader();
+            
+            reader.onprogress = (e) => {
+                if (e.lengthComputable) {
+                    const porc = Math.round((e.loaded / e.total) * 100);
+                    bar.style.width = porc + '%';
+                    percTxt.innerText = porc + '%';
+                }
+            };
+
+            reader.onload = async () => {
+                const base64 = reader.result.split(',')[1];
+                
+                // 2. Enviar al "Obrero" (Apps Script)
+                // Usamos la URL que configuraste en api.js para GAS
+                const response = await fetch(GAS_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        archivo: base64,
+                        nombre: file.name,
+                        tipo: file.name.split('.').pop()
+                    })
+                });
+                
+                const resGas = await response.json();
+                
+                if (resGas.success) {
+                    // 3. Registrar en Supabase
+                    await supabase.from('archivos').insert([{
+                        proyecto_id: proyectoId,
+                        nombre_real: file.name,
+                        tipo: file.name.split('.').pop(),
+                        drive_id: resGas.id_drive,
+                        tamano_bytes: file.size
+                    }]);
+                    
+                    alert("Archivo sincronizado con éxito.");
+                    statusDiv.style.display = 'none';
+                    cargarDetalles();
+                }
+            };
+            
+            reader.readAsDataURL(file);
+
+        } catch (error) {
+            alert("Falla en la subida: " + error.message);
+        }
+    }
+
+    async function eliminarArchivo(id, driveId) {
+        if (!confirm("¿Seguro que deseas desvincular este archivo?")) return;
+        
+        const { error } = await supabase.from('archivos').delete().eq('id', id);
+        if (error) alert(error.message);
+        else cargarDetalles();
+    }
+
+    window.onload = cargarDetalles;
+</script>
+</body>
+</html>
