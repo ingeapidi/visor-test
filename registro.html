@@ -50,11 +50,11 @@
             btn.disabled = true;
 
             try {
-                // 1. Registro en Supabase Auth
+                // 1. Registro Auth (usa la función de api.js)
                 const { user } = await registrarUsuario(email, pass, nombre, empresa);
-
-                // 2. Insertar en nuestra tabla de perfiles (opcional pero recomendado)
-                const { error: errorPerfil } = await supabase
+            
+                // 2. Insertar en perfiles (USA 'sb', no 'supabase')
+                const { error: errorPerfil } = await sb
                     .from('perfiles')
                     .insert([{ 
                         id: user.id, 
@@ -62,6 +62,7 @@
                         email: email, 
                         empresa: empresa 
                     }]);
+// ...
                 
                 if(errorPerfil) throw errorPerfil;
 
