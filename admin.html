@@ -11,39 +11,123 @@
     <div class="logo" onclick="location.href='inicio.html'"><i class="fas fa-satellite-dish"></i> GEOPORTAL CLOUD</div>
     <div class="header-title">PANEL DE CONTROL GENERAL</div>
     <div class="user-access" onclick="location.href='perfil.html'">
-        <div style="text-align: right;"><small>Ing. Juan Pérez</small><br><b style="font-size: 0.7em; opacity: 0.6;">ADMINISTRADOR</b></div>
+        <div style="text-align: right;"><small>Cargando...</small><br><b style="font-size: 0.7em; opacity: 0.6;">ADMINISTRADOR</b></div>
         <i class="fas fa-user-circle" style="font-size: 1.5rem;"></i>
     </div>
 </header>
 <main>
     <aside class="sidebar">
-        <div style="padding: 20px;"><button class="btn btn-primary" style="width:100%" onclick="location.href='nuevo.html'"><i class="fas fa-plus"></i> CREAR NUEVO</button></div>
+        <div style="padding: 20px;">
+            <button class="btn btn-primary" style="width:100%" onclick="location.href='nuevo.html'">
+                <i class="fas fa-plus"></i> CREAR NUEVO
+            </button>
+        </div>
         <div class="tree-title">Espacios de Trabajo</div>
-        <div class="tree-item"><i class="fas fa-folder-open" style="color: #f59e0b;"></i> DIVISIÓN NORTE</div>
-        <div class="tree-item tree-sub-item active"><i class="fas fa-map"></i> Vuelo Lidar Dique 4</div>
-        <div class="tree-item"><i class="fas fa-folder" style="color: #94a3b8;"></i> ÁREA INFRAESTRUCTURA</div>
+        <div id="lista-espacios">
+            <p style="padding: 10px 20px; font-size: 0.8rem; opacity: 0.5;">Cargando espacios...</p>
+        </div>
     </aside>
+
     <div class="container-scroll">
         <div class="stats-grid">
-            <div class="card"><small>ALMACENAMIENTO</small><div style="font-size: 1.6rem; font-weight: 800; margin: 8px 0;">2.84 TB</div></div>
-            <div class="card"><small>PROYECTOS ACTIVOS</small><div style="font-size: 1.6rem; font-weight: 800; margin: 8px 0;">14</div></div>
-            <div class="card"><small>INGESTAS MES</small><div style="font-size: 1.6rem; font-weight: 800; margin: 8px 0;">42</div></div>
-            <div class="card" style="border-right: 4px solid var(--error);"><small>ALERTAS</small><div style="font-size: 1.6rem; font-weight: 800; margin: 8px 0; color: var(--error);">3</div></div>
+            <div class="card"><small>ALMACENAMIENTO</small><div id="stat-storage" style="font-size: 1.6rem; font-weight: 800; margin: 8px 0;">-- TB</div></div>
+            <div class="card"><small>PROYECTOS ACTIVOS</small><div id="stat-projects" style="font-size: 1.6rem; font-weight: 800; margin: 8px 0;">0</div></div>
+            <div class="card"><small>INGESTAS MES</small><div style="font-size: 1.6rem; font-weight: 800; margin: 8px 0;">0</div></div>
+            <div class="card" style="border-right: 4px solid var(--error);"><small>ALERTAS</small><div style="font-size: 1.6rem; font-weight: 800; margin: 8px 0; color: var(--error);">0</div></div>
         </div>
+
         <div class="card">
             <div style="display: flex; justify-content: space-between; margin-bottom: 25px;">
-                <div><h2 style="margin:0;">Vuelo Lidar Dique 4</h2><p style="color:var(--text-slate)">Sector Minero Oeste</p></div>
-                <button class="btn btn-outline" onclick="location.href='visor.html'"><i class="fas fa-external-link-alt"></i> IR AL VISOR</button>
+                <div>
+                    <h2 style="margin:0;">Proyectos Recientes</h2>
+                    <p style="color:var(--text-slate)">Listado general de relevamientos cargados</p>
+                </div>
             </div>
             <table>
-                <thead><tr><th>Capa</th><th>Tipo</th><th>Tamaño</th><th>Estado</th></tr></thead>
-                <tbody>
-                    <tr><td>MDT_Superficie_D4.tif</td><td>Elevación</td><td>8.4 GB</td><td><span class="status-highlight">LISTO</span></td></tr>
-                    <tr><td>Nube_Puntos_Lidar.las</td><td>LAS</td><td>24.1 GB</td><td><span class="status-highlight">LISTO</span></td></tr>
+                <thead>
+                    <tr>
+                        <th>Proyecto</th>
+                        <th>Cliente</th>
+                        <th>Ubicación</th>
+                        <th>Estado</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-proyectos">
+                    <tr><td colspan="5" style="text-align:center;">Buscando proyectos en la base de datos...</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
 </main>
+
+<script src="js/api.js"></script>
+
+<script>
+    async function cargarDashboard() {
+        const usuario = verificarSesion();
+        if (!usuario) return;
+
+        try {
+            // Llamamos al doGet de Google Apps Script
+            const response = await fetch(`${API_URL}?action=obtener_datos_admin&id_usuario=${usuario.id}`);
+            const result = await response.json();
+
+            if (result.success) {
+                renderizarEspacios(result.data.espacios);
+                renderizarProyectos(result.data.proyectos);
+                
+                // Actualizar contadores rápidos
+                document.getElementById('stat-projects').innerText = result.data.proyectos.length;
+            }
+        } catch (error) {
+            console.error("Error al cargar dashboard:", error);
+            document.getElementById('tabla-proyectos').innerHTML = '<tr><td colspan="5" style="color:red">Error al conectar con la base de datos.</td></tr>';
+        }
+    }
+
+    function renderizarEspacios(espacios) {
+        const container = document.getElementById('lista-espacios');
+        if (espacios.length === 0) {
+            container.innerHTML = '<p style="padding:10px 20px; font-size:0.8rem;">No hay espacios creados.</p>';
+            return;
+        }
+
+        container.innerHTML = espacios.map(esp => `
+            <div class="tree-item">
+                <i class="fas fa-folder" style="color: #f59e0b;"></i> ${esp[2]}
+            </div>
+        `).join('');
+    }
+
+    function renderizarProyectos(proyectos) {
+        const container = document.getElementById('tabla-proyectos');
+        if (proyectos.length === 0) {
+            container.innerHTML = '<tr><td colspan="5" style="text-align:center;">No tienes proyectos registrados aún.</td></tr>';
+            return;
+        }
+
+        container.innerHTML = proyectos.map(p => `
+            <tr>
+                <td><strong>${p[2]}</strong></td>
+                <td>${p[3]}</td>
+                <td>${p[5] || 'No definida'}</td>
+                <td><span class="status-highlight">LISTO</span></td>
+                <td>
+                    <button class="btn btn-outline" style="padding: 5px 10px; font-size: 0.7rem;" onclick="location.href='visor.html?id=${p[0]}'">
+                        <i class="fas fa-eye"></i> VER
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    // Al cargar la página, inicializamos todo
+    window.onload = () => {
+        if (typeof inicializarInterfaz === 'function') inicializarInterfaz();
+        cargarDashboard();
+    };
+</script>
+
 </body>
 </html>
