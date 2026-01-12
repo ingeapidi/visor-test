@@ -1,11 +1,25 @@
-// 1. CONFIGURACIÓN INICIAL
-const SUPABASE_URL = "https://nlimqewcchsczzccgkme.supabase.co";
-const SUPABASE_KEY = "sb_publishable_t6-SiscKU7BChhVzzHnnyA_KNmVyWur";
+// --- CONFIGURACIÓN SUPABASE ---
+const SB_URL = "https://nlimqewcchsczzccgkme.supabase.co"; // Reemplaza con tu URL
+const SB_KEY = "sb_publishable_t6-SiscKU7BChhVzzHnnyA_KNmVyWur";              // Reemplaza con tu Key
 
-// Inicializar cliente
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// Inicializar el cliente (usamos 'sb' para no chocar con el objeto global 'supabase')
+const sb = supabase.createClient(SB_URL, SB_KEY);
 
-// 2. SESIÓN
+// --- FUNCIÓN DE LOGIN ---
+async function login(email, password) {
+    const { data, error } = await sb.auth.signInWithPassword({
+        email: email,
+        password: password,
+    });
+    
+    if (error) throw error; // Si hay error, lo captura el 'catch' del HTML
+    
+    // Guardamos la sesión
+    localStorage.setItem('geo_session', JSON.stringify(data.session));
+    return data;
+}
+
+// --- VERIFICACIÓN DE SESIÓN ---
 function verificarSesion() {
     const sessionStr = localStorage.getItem('geo_session');
     if (!sessionStr) {
@@ -20,27 +34,9 @@ function verificarSesion() {
     };
 }
 
-// 3. LOGIN
-async function login(email, password) {
-    const { data, error } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: password
-    });
-    if (error) throw error;
-    localStorage.setItem('geo_session', JSON.stringify(data.session));
-    return data;
+// --- CERRAR SESIÓN ---
+async function logout() {
+    await sb.auth.signOut();
+    localStorage.removeItem('geo_session');
+    window.location.href = 'index.html';
 }
-
-// 4. REGISTRO
-async function registrarUsuario(email, password, nombre, empresa) {
-    const { data, error } = await supabase.auth.signUp({
-        email: email,
-        password: password,
-        options: { data: { nombre_completo: nombre, empresa: empresa } }
-    });
-    if (error) throw error;
-    return data;
-}
-
-// 5. GOOGLE DRIVE (Solo para el futuro envío de archivos pesados)
-const GAS_URL_DRIVE = "ESTA_ES_LA_UNICA_URL_DE_GOOGLE_QUE_USAREMOS";
