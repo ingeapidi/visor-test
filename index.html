@@ -31,7 +31,6 @@
     <script src="js/api.js"></script>
 
     <script>
-        // Renombramos la función local para evitar conflicto con login() de api.js
         async function ejecutarLogin() {
             const email = document.getElementById('userEmail').value;
             const pass = document.getElementById('userPass').value;
@@ -42,24 +41,28 @@
                 return;
             }
 
-            btn.innerText = "VERIFICANDO...";
-            btn.style.pointerEvents = "none"; // Evita múltiples clics
+            btn.innerText = "CONECTANDO A SUPABASE...";
+            btn.style.pointerEvents = "none"; 
 
             try {
-                // LLAMADA A LA FUNCIÓN NATIVA DE SUPABASE DEFINIDA EN api.js
+                // LLAMADA A LA FUNCIÓN login() DE api.js
+                // Esta función usa 'sb.auth.signInWithPassword'
                 const sessionData = await login(email, pass);
                 
-                // Si llegamos aquí, el login fue exitoso (api.js ya guardó la sesión)
-                window.location.href = "inicio.html";
+                console.log("Sesión iniciada con éxito:", sessionData);
+                
+                // IMPORTANTE: Redirigimos a admin.html porque es la página 
+                // que ya tenemos migrada a las tablas de Supabase.
+                window.location.href = "admin.html";
                 
             } catch (error) {
-                console.error("Error de acceso:", error);
+                console.error("Detalles del error:", error);
                 
-                // Manejo amigable de errores de Supabase
+                // Si ves este alert, es que Supabase está respondiendo (no Google)
                 if (error.message === "Invalid login credentials") {
-                    alert("Correo o contraseña incorrectos");
+                    alert("Credenciales incorrectas en Supabase. Verifica el usuario en tu panel.");
                 } else {
-                    alert("Error: " + error.message);
+                    alert("Error de Conexión: " + error.message);
                 }
                 
                 btn.innerText = "INGRESAR";
@@ -72,7 +75,6 @@
             ejecutarLogin();
         });
 
-        // Permitir login al presionar Enter
         document.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') ejecutarLogin();
         });
