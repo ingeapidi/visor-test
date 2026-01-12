@@ -64,7 +64,7 @@
 
     <script src="js/api.js"></script>
     <script>
-        // Función para cargar espacios (la usaremos al inicio y en caso de error)
+        // Carga los espacios filtrados por el usuario logueado
         async function cargarEspacios() {
             const usuario = verificarSesion();
             if(!usuario) return;
@@ -75,16 +75,14 @@
 
                 if (result.success) {
                     const select = document.getElementById('selectEspacio');
-                    // Limpiar opciones previas manteniendo las dos primeras
                     while (select.options.length > 2) { select.remove(2); }
                     
                     result.data.espacios.forEach(esp => {
                         const opt = document.createElement('option');
-                        opt.value = esp[0]; 
-                        opt.innerText = esp[2]; 
+                        opt.value = esp[0]; // ID del espacio
+                        opt.innerText = esp[2]; // Nombre del espacio
                         select.add(opt, select.options[1]);
                     });
-                    console.log("Espacios cargados correctamente.");
                 }
             } catch (e) { console.error("Error cargando espacios", e); }
         }
@@ -103,8 +101,9 @@
             let idEspacioFinal = select.value;
             const proyNombre = document.getElementById('proyNombre').value;
 
+            // Validación de campos obligatorios antes de disparar la API
             if (!idEspacioFinal || !proyNombre) {
-                alert("Por favor completa los campos obligatorios.");
+                alert("Condición Restrictiva: Debe seleccionar un Espacio y asignar un Nombre al Proyecto.");
                 return;
             }
 
@@ -112,28 +111,27 @@
             btn.disabled = true;
 
             try {
-                // PASO A: Crear Espacio si es nuevo
+                // PASO 1: Creación simultánea de Espacio si es requerido
                 if (idEspacioFinal === "NUEVO") {
                     const nombreE = document.getElementById('nombreNuevoEspacio').value;
-                    if(!nombreE) throw new Error("Debes asignar un nombre al nuevo espacio.");
+                    if(!nombreE) throw new Error("Debe asignar un nombre al nuevo espacio de trabajo.");
                     
                     const resE = await callApi('crear_espacio', {
-                        id_usuario: usuario.id, // VITAL para que aparezca en tu cuenta
+                        id_usuario: usuario.id,
                         nombre: nombreE,
                         descripcion: "Espacio automático",
                         email: usuario.email
                     });
                     
-                    if (resE && resE.success && resE.data && resE.data.id_creado) {
-                        idEspacioFinal = resE.data.id_creado;
+                    if (resE && resE.success) {
+                        idEspacioFinal = resE.data.id_creado; // Vinculamos el ID recién nacido
                     } else {
-                        // REPARACIÓN: Si falló la confirmación, refrescamos la lista y avisamos
-                        await cargarEspacios();
-                        throw new Error("El servidor creó el espacio pero no confirmó el ID. Se ha actualizado la lista, por favor selecciónalo e intenta crear el proyecto de nuevo.");
+                        // Aquí capturamos errores como "Nombre ya existe" del servidor
+                        throw new Error(resE.message || "Error al crear espacio.");
                     }
                 }
 
-                // PASO B: Crear el Proyecto vinculado
+                // PASO 2: Creación del Proyecto (Garantiza vínculo obligatorio)
                 const resP = await callApi('crear_proyecto', {
                     id_espacio: idEspacioFinal,
                     nombre: proyNombre,
@@ -142,16 +140,17 @@
                     ubicacion: document.getElementById('proyUbicacion').value
                 });
 
-                if (resP.success) {
-                    alert("¡Configuración completada con éxito!");
+                if (resP && resP.success) {
+                    alert("¡Éxito! El proyecto ha sido vinculado correctamente al espacio.");
                     window.location.href = 'admin.html';
                 } else {
-                    throw new Error("Error al crear el proyecto: " + resP.message);
+                    throw new Error(resP.message || "Error al crear el proyecto.");
                 }
 
             } catch (error) {
-                alert("Aviso del sistema: " + error.message);
-                console.error("Detalle técnico:", error);
+                alert("Aviso: " + error.message);
+                // Si el espacio se creó pero falló el proyecto, refrescamos la lista
+                await cargarEspacios(); 
             } finally {
                 btn.disabled = false;
                 btn.innerText = "CREAR PROYECTO Y FINALIZAR";
