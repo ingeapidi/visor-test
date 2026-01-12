@@ -7,6 +7,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body style="display: flex; align-items: center; justify-content: center; height: 100vh;">
+
     <div class="card" style="width: 100%; max-width: 400px; text-align: center;">
         <div class="logo" style="justify-content: center; margin-bottom: 20px;">
             <i class="fas fa-satellite-dish"></i> GEOPORTAL CLOUD
@@ -18,11 +19,16 @@
         <input type="password" id="userPass" placeholder="Contraseña" style="width:100%; padding:12px; margin-bottom:20px; border:1px solid #cbd5e1; border-radius:8px;">
         
         <a href="#" id="loginBtn" class="btn btn-primary" style="width:100%; justify-content: center;">INGRESAR</a>
+
+        <p style="margin-top: 25px; font-size: 0.85rem; color: #64748b;">
+            ¿No tienes cuenta? 
+            <a href="registro.html" style="color: var(--accent); font-weight: bold; text-decoration: none;">Regístrate aquí</a>
+        </p>
     </div>
 
-    <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbz7SoDrtjnHMr_LLIHu0xqosDWcEk3Y9CceA02HuMSee4_j6B21Pjb051wV0MmuG9voTQ/exec";
+    <script src="js/api.js"></script>
 
+    <script>
         async function login() {
             const email = document.getElementById('userEmail').value;
             const pass = document.getElementById('userPass').value;
@@ -35,29 +41,15 @@
 
             btn.innerText = "VERIFICANDO...";
 
-            try {
-                // Enviamos la petición al Apps Script
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        action: 'login',
-                        payload: { email: email, password: pass }
-                    })
-                });
+            // USAMOS LA FUNCIÓN CENTRALIZADA DE api.js
+            const result = await callApi('login', { email: email, password: pass });
 
-                const result = await response.json();
-
-                if (result.success) {
-                    // Guardamos los datos del usuario para usarlos en Perfil y Admin
-                    localStorage.setItem('usuario', JSON.stringify(result.data));
-                    window.location.href = "inicio.html";
-                } else {
-                    alert("Error: " + result.message);
-                    btn.innerText = "INGRESAR";
-                }
-            } catch (error) {
-                console.error("Error:", error);
-                alert("Hubo un problema con la conexión");
+            if (result.success) {
+                // Guardamos la sesión y redirigimos
+                localStorage.setItem('usuario', JSON.stringify(result.data));
+                window.location.href = "inicio.html";
+            } else {
+                alert("Error: " + result.message);
                 btn.innerText = "INGRESAR";
             }
         }
