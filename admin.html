@@ -6,15 +6,8 @@
     <link rel="stylesheet" href="css/styles.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* Estilo para resaltar el espacio seleccionado */
-        .tree-item {
-            cursor: pointer;
-            transition: all 0.2s;
-            border-right: 3px solid transparent;
-        }
-        .tree-item:hover {
-            background-color: rgba(0,0,0,0.05);
-        }
+        .tree-item { cursor: pointer; transition: all 0.2s; border-right: 3px solid transparent; }
+        .tree-item:hover { background-color: rgba(0,0,0,0.05); }
         .tree-item.active {
             background-color: rgba(37, 99, 235, 0.1);
             color: #2563eb;
@@ -47,9 +40,9 @@
 
     <div class="container-scroll">
         <div class="stats-grid">
-            <div class="card"><small>ALMACENAMIENTO</small><div id="stat-storage" style="font-size: 1.6rem; font-weight: 800; margin: 8px 0;">1.2 TB</div></div>
+            <div class="card"><small>ALMACENAMIENTO</small><div id="stat-storage" style="font-size: 1.6rem; font-weight: 800; margin: 8px 0;">-- TB</div></div>
             <div class="card"><small>PROYECTOS MOSTRADOS</small><div id="stat-projects" style="font-size: 1.6rem; font-weight: 800; margin: 8px 0;">0</div></div>
-            <div class="card"><small>INGESTAS MES</small><div style="font-size: 1.6rem; font-weight: 800; margin: 8px 0;">12</div></div>
+            <div class="card"><small>INGESTAS MES</small><div style="font-size: 1.6rem; font-weight: 800; margin: 8px 0;">--</div></div>
             <div class="card" style="border-right: 4px solid var(--error);"><small>ALERTAS</small><div style="font-size: 1.6rem; font-weight: 800; margin: 8px 0; color: var(--error);">0</div></div>
         </div>
 
@@ -71,80 +64,81 @@
                     </tr>
                 </thead>
                 <tbody id="tabla-proyectos">
-                    <tr><td colspan="5" style="text-align:center;">Buscando proyectos en la base de datos...</td></tr>
+                    <tr><td colspan="5" style="text-align:center;">Buscando proyectos en Supabase...</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
 </main>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/api.js"></script>
 
 <script>
-    // Variable global para filtrar sin volver a llamar a la API
     let proyectosGlobales = [];
 
     async function cargarDashboard() {
         const usuario = verificarSesion();
         if (!usuario) return;
 
-        try {
-            const response = await fetch(`${API_URL}?action=obtener_datos_admin&id_usuario=${usuario.id}`);
-            const result = await response.json();
+        // Mostrar nombre en el header
+        document.getElementById('headerUserName').innerText = usuario.email.split('@')[0].toUpperCase();
 
-            if (result.success) {
-                proyectosGlobales = result.data.proyectos;
-                
-                renderizarEspacios(result.data.espacios);
-                // Al inicio mostramos todos
-                renderizarProyectos(proyectosGlobales);
-            }
+        try {
+            // 1. Obtener Espacios (Filtrados por RLS automáticamente)
+            const { data: espacios, error: errE } = await supabase
+                .from('espacios')
+                .select('*')
+                .order('nombre', { ascending: true });
+
+            if (errE) throw errE;
+
+            // 2. Obtener Proyectos (Filtrados por RLS automáticamente)
+            const { data: proyectos, error: errP } = await supabase
+                .from('proyectos')
+                .select('*')
+                .order('fecha_creacion', { ascending: false });
+
+            if (errP) throw errP;
+
+            proyectosGlobales = proyectos;
+            renderizarEspacios(espacios);
+            renderizarProyectos(proyectosGlobales);
+
         } catch (error) {
-            console.error("Error al cargar dashboard:", error);
-            document.getElementById('tabla-proyectos').innerHTML = '<tr><td colspan="5" style="color:red">Error de conexión.</td></tr>';
+            console.error("Error en Dashboard:", error);
+            document.getElementById('tabla-proyectos').innerHTML = '<tr><td colspan="5" style="color:red">Error al leer de Supabase.</td></tr>';
         }
     }
 
     function renderizarEspacios(espacios) {
         const container = document.getElementById('lista-espacios');
-        
-        // Opción inicial para ver todo
         let html = `
             <div class="tree-item active" onclick="filtrarPorEspacio('TODOS', this, 'Todos los Proyectos')">
                 <i class="fas fa-layer-group"></i> MOSTRAR TODO
             </div>
         `;
 
-        if (espacios.length > 0) {
+        if (espacios && espacios.length > 0) {
             html += espacios.map(esp => `
-                <div class="tree-item" onclick="filtrarPorEspacio('${esp[0]}', this, '${esp[2]}')">
-                    <i class="fas fa-folder" style="color: #f59e0b;"></i> ${esp[2]}
+                <div class="tree-item" onclick="filtrarPorEspacio('${esp.id}', this, '${esp.nombre}')">
+                    <i class="fas fa-folder" style="color: #f59e0b;"></i> ${esp.nombre}
                 </div>
             `).join('');
-        } else {
-            html = '<p style="padding:10px 20px; font-size:0.8rem;">Sin espacios creados.</p>';
         }
-
         container.innerHTML = html;
     }
 
-    // FUNCIÓN DE FILTRADO
     function filtrarPorEspacio(idEspacio, elemento, nombreEspacio) {
-        // 1. Actualizar estado visual en la sidebar
         document.querySelectorAll('.tree-item').forEach(el => el.classList.remove('active'));
         elemento.classList.add('active');
 
-        // 2. Actualizar títulos
         document.getElementById('titulo-seccion').innerText = nombreEspacio;
-        document.getElementById('subtitulo-seccion').innerText = 
-            idEspacio === 'TODOS' ? 'Listado general de relevamientos' : `Proyectos en el espacio ${nombreEspacio}`;
 
-        // 3. Filtrar lógica
         if (idEspacio === 'TODOS') {
             renderizarProyectos(proyectosGlobales);
         } else {
-            // p[1] es la columna id_espacio en la hoja proyectos
-            const filtrados = proyectosGlobales.filter(p => p[1] === idEspacio);
+            const filtrados = proyectosGlobales.filter(p => p.espacio_id === idEspacio);
             renderizarProyectos(filtrados);
         }
     }
@@ -153,31 +147,34 @@
         const container = document.getElementById('tabla-proyectos');
         document.getElementById('stat-projects').innerText = proyectos.length;
 
-        if (proyectos.length === 0) {
-            container.innerHTML = '<tr><td colspan="5" style="text-align:center;">No hay proyectos para mostrar.</td></tr>';
+        if (!proyectos || proyectos.length === 0) {
+            container.innerHTML = '<tr><td colspan="5" style="text-align:center;">No hay proyectos registrados.</td></tr>';
             return;
         }
 
         container.innerHTML = proyectos.map(p => `
             <tr>
-                <td><strong>${p[2]}</strong></td>
-                <td>${p[3]}</td>
-                <td>${p[5] || 'No definida'}</td>
+                <td><strong>${p.nombre}</strong></td>
+                <td>${p.cliente || '---'}</td>
+                <td>${p.ubicacion || '---'}</td>
                 <td><span class="status-highlight">LISTO</span></td>
                 <td>
-                    <button class="btn btn-outline" style="padding: 5px 10px; font-size: 0.7rem;" onclick="location.href='visor.html?id=${p[0]}'">
-                        <i class="fas fa-eye"></i> VER
-                    </button>
+                    <div style="display:flex; gap:5px;">
+                        <button class="btn btn-outline" style="padding: 5px 8px; font-size: 0.7rem;" onclick="location.href='visor.html?id=${p.id}'">
+                            <i class="fas fa-eye"></i> VER
+                        </button>
+                        <button class="btn btn-outline" style="padding: 5px 8px; font-size: 0.7rem; border-color: var(--accent); color: var(--accent);" onclick="location.href='editar.html?id=${p.id}'">
+                            <i class="fas fa-edit"></i> EDITAR
+                        </button>
+                    </div>
                 </td>
             </tr>
         `).join('');
     }
 
     window.onload = () => {
-        if (typeof inicializarInterfaz === 'function') inicializarInterfaz();
         cargarDashboard();
     };
 </script>
-
 </body>
 </html>
