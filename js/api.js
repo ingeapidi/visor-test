@@ -1,25 +1,40 @@
-// --- CONFIGURACIÓN SUPABASE ---
-const SB_URL = "https://nlimqewcchsczzccgkme.supabase.co"; // Reemplaza con tu URL
-const SB_KEY = "sb_publishable_t6-SiscKU7BChhVzzHnnyA_KNmVyWur";              // Reemplaza con tu Key
+// js/api.js
 
-// Inicializar el cliente (usamos 'sb' para no chocar con el objeto global 'supabase')
+// 1. CONFIGURACIÓN
+const SB_URL = "https://nlimqewcchsczzccgkme.supabase.co"; 
+const SB_KEY = "sb_publishable_t6-SiscKU7BChhVzzHnnyA_KNmVyWur"; 
+
+// 2. INICIALIZACIÓN (Usaremos 'sb' consistentemente)
 const sb = supabase.createClient(SB_URL, SB_KEY);
 
-// --- FUNCIÓN DE LOGIN ---
+// 3. FUNCIÓN DE REGISTRO (La que faltaba)
+async function registrarUsuario(email, password, nombre, empresa) {
+    const { data, error } = await sb.auth.signUp({
+        email: email,
+        password: password,
+        options: {
+            data: {
+                nombre_completo: nombre,
+                empresa: empresa
+            }
+        }
+    });
+    if (error) throw error;
+    return data;
+}
+
+// 4. FUNCIÓN DE LOGIN
 async function login(email, password) {
     const { data, error } = await sb.auth.signInWithPassword({
         email: email,
         password: password,
     });
-    
-    if (error) throw error; // Si hay error, lo captura el 'catch' del HTML
-    
-    // Guardamos la sesión
+    if (error) throw error;
     localStorage.setItem('geo_session', JSON.stringify(data.session));
     return data;
 }
 
-// --- VERIFICACIÓN DE SESIÓN ---
+// 5. VERIFICACIÓN DE SESIÓN
 function verificarSesion() {
     const sessionStr = localStorage.getItem('geo_session');
     if (!sessionStr) {
@@ -30,13 +45,6 @@ function verificarSesion() {
     return {
         id: session.user.id,
         email: session.user.email,
-        empresa: session.user.user_metadata?.empresa || "Usuario"
+        empresa: session.user.user_metadata?.nombre_completo || "Usuario"
     };
-}
-
-// --- CERRAR SESIÓN ---
-async function logout() {
-    await sb.auth.signOut();
-    localStorage.removeItem('geo_session');
-    window.location.href = 'index.html';
 }
