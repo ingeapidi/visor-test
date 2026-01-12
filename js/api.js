@@ -32,3 +32,28 @@ function verificarSesion() {
     }
     return JSON.parse(usuario);
 }
+
+/**
+ * Esta función busca los elementos del Header en cualquier página
+ * y pone el nombre del usuario logueado automáticamente.
+ */
+function inicializarInterfaz() {
+    const usuario = verificarSesion();
+    if (usuario) {
+        // Buscamos cualquier elemento que deba mostrar el nombre
+        const nombreDisplay = document.querySelector('.user-access small, .user-info span');
+        if (nombreDisplay) {
+            nombreDisplay.innerText = usuario.nombre;
+        }
+        
+        const avatarDisplay = document.querySelector('.avatar-large');
+        if (avatarDisplay) {
+            // Ponemos las iniciales (Ej: Juan Pérez -> JP)
+            const iniciales = usuario.nombre.split(' ').map(n => n[0]).join('');
+            avatarDisplay.innerText = iniciales;
+        }
+    }
+}
+
+// Se ejecuta automáticamente al cargar cualquier página
+window.onload = inicializarInterfaz;
