@@ -5,44 +5,34 @@
     <title>Inicio - Geoportal Cloud</title>
     <link rel="stylesheet" href="css/styles.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        .home-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-top: 50px; }
-        .card-link { transition: 0.3s; cursor: pointer; text-decoration: none; color: inherit; text-align: center; }
-        .card-link:hover { transform: translateY(-10px); border-color: var(--accent); }
-        .card-link i { font-size: 3rem; color: var(--accent); margin-bottom: 15px; }
-    </style>
 </head>
 <body>
-
     <header>
         <a href="inicio.html" class="logo"><i class="fas fa-satellite-dish"></i> GEOPORTAL CLOUD</a>
         <a href="perfil.html" style="color:white;"><i class="fas fa-user-circle" style="font-size: 1.5rem;"></i></a>
     </header>
-
-    <div style="max-width: 1100px; margin: 60px auto; padding: 0 20px;">
-        <div style="text-align: center;">
-            <h1>Bienvenido al Centro de Control</h1>
+    <div class="container-scroll" style="max-width: 1100px; margin: auto;">
+        <div style="text-align: center; margin-bottom: 50px;">
+            <h1>Centro de Control</h1>
             <p style="color: var(--text-slate);">Seleccione un módulo operativo</p>
         </div>
-
-        <div class="home-grid">
-            <a href="admin.html" class="card card-link">
-                <i class="fas fa-sitemap"></i>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px;">
+            <a href="admin.html" class="card" style="text-align: center;">
+                <i class="fas fa-sitemap" style="font-size: 3rem; color: var(--accent); margin-bottom: 15px;"></i>
                 <h3>Administración</h3>
                 <p>Gestión de espacios y proyectos.</p>
             </a>
-            <a href="visor.html" class="card card-link">
-                <i class="fas fa-map-marked-alt"></i>
+            <a href="visor.html" class="card" style="text-align: center;">
+                <i class="fas fa-map-marked-alt" style="font-size: 3rem; color: var(--accent); margin-bottom: 15px;"></i>
                 <h3>Visor WebGIS</h3>
-                <p>Visualización y herramientas técnicas.</p>
+                <p>Visualización técnica.</p>
             </a>
-            <a href="comparar.html" class="card card-link">
-                <i class="fas fa-columns"></i>
+            <a href="comparar.html" class="card" style="text-align: center;">
+                <i class="fas fa-columns" style="font-size: 3rem; color: var(--accent); margin-bottom: 15px;"></i>
                 <h3>Comparación</h3>
-                <p>Análisis temporal y de volúmenes.</p>
+                <p>Análisis temporal.</p>
             </a>
         </div>
     </div>
-
 </body>
 </html>
