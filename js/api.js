@@ -1,44 +1,55 @@
-// js/api.js
-const API_URL = "https://script.google.com/macros/s/AKfycbz7SoDrtjnHMr_LLIHu0xqosDWcEk3Y9CceA02HuMSee4_j6B21Pjb051wV0MmuG9voTQ/exec";
+// 1. CONFIGURACIÓN INICIAL
+const SUPABASE_URL = "https://nlimqewcchsczzccgkme.supabase.co";
+const SUPABASE_KEY = "sb_publishable_t6-SiscKU7BChhVzzHnnyA_KNmVyWur";
 
-async function callApi(action, payload) {
-    try {
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            body: JSON.stringify({ action: action, payload: payload })
-        });
-        return await response.json();
-    } catch (error) {
-        console.error("Error API:", error);
-        return { success: false, message: "Error de conexión" };
-    }
+// Inicializar el cliente de Supabase
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// 2. GESTIÓN DE SESIÓN (AUTENTICACIÓN NATIVA)
+async function login(email, password) {
+    const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
+    });
+    
+    if (error) throw error;
+    
+    // Guardamos la sesión en localStorage para persistencia rápida
+    localStorage.setItem('geo_session', JSON.stringify(data.session));
+    return data;
+}
+
+async function logout() {
+    await supabase.auth.signOut();
+    localStorage.removeItem('geo_session');
+    window.location.href = 'index.html';
 }
 
 function verificarSesion() {
-    const usuarioJson = localStorage.getItem('usuario');
-    if (!usuarioJson && !window.location.href.includes('index.html') && !window.location.href.includes('registro.html')) {
+    const sessionStr = localStorage.getItem('geo_session');
+    if (!sessionStr) {
         window.location.href = 'index.html';
         return null;
     }
-    return JSON.parse(usuarioJson);
+    const session = JSON.parse(sessionStr);
+    
+    // Retornamos un objeto compatible con lo que ya tenías
+    return {
+        id: session.user.id,
+        email: session.user.email,
+        empresa: session.user.user_metadata?.empresa || "Usuario"
+    };
 }
 
-function inicializarInterfaz() {
-    const usuario = verificarSesion();
-    if (!usuario) return;
+// 3. LOGICA DE DATOS (REEMPLAZA A callApi)
+// Nota: Para subir archivos a Drive seguiremos usando la URL de Apps Script
+const GAS_URL = "TU_URL_DE_APPS_SCRIPT_SOLO_PARA_DRIVE";
 
-    // Actualizar nombre en Header (si existe)
-    const nombreDisplay = document.querySelector('.user-access small, .user-info span');
-    if (nombreDisplay) nombreDisplay.innerText = usuario.nombre;
-
-    // Actualizar Avatar (si existe)
-    const avatarDisplay = document.querySelector('.avatar-large');
-    if (avatarDisplay && usuario.nombre) {
-        const iniciales = usuario.nombre.split(' ').map(n => n[0]).join('').toUpperCase();
-        avatarDisplay.innerText = iniciales;
-    }
-    console.log("Interfaz inicializada para:", usuario.nombre);
+async function registrarArchivoEnSupabase(metadata) {
+    const { data, error } = await supabase
+        .from('archivos')
+        .insert([metadata]);
+    
+    if (error) throw error;
+    return data;
 }
-
-// Usamos DOMContentLoaded en lugar de window.onload para evitar conflictos
-document.addEventListener('DOMContentLoaded', inicializarInterfaz);
