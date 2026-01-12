@@ -188,3 +188,82 @@ footer {
     gap: 30px; 
 }
 .status-highlight { color: var(--success); font-weight: bold; }
+
+/* --- COMPONENTES DE FORMULARIO --- */
+.form-container { max-width: 800px; margin: 40px auto; padding: 0 20px; }
+
+label { 
+    display: block; 
+    font-size: 0.75rem; 
+    font-weight: 800; 
+    color: var(--text-slate); 
+    text-transform: uppercase; 
+    margin-bottom: 8px; 
+}
+
+input, select, textarea { 
+    width: 100%; 
+    padding: 12px; 
+    border: 1px solid #cbd5e1; 
+    border-radius: 8px; 
+    margin-bottom: 20px; 
+    font-family: inherit; 
+    box-sizing: border-box;
+}
+
+input:disabled { background: #f8fafc; color: #94a3b8; cursor: not-allowed; }
+
+/* --- ZONA DE CARGA (DRAG & DROP) --- */
+.upload-zone { 
+    border: 2px dashed var(--accent); 
+    background: #eff6ff; 
+    padding: 40px; 
+    border-radius: 12px; 
+    text-align: center; 
+    margin-top: 20px; 
+    cursor: pointer; 
+    transition: 0.3s;
+}
+.upload-zone:hover { background: #dbeafe; }
+
+/* --- PERFIL Y CONFIGURACIÓN --- */
+.profile-grid { 
+    display: grid; 
+    grid-template-columns: 280px 1fr; 
+    gap: 30px; 
+    max-width: 1100px; 
+    margin: 40px auto; 
+    padding: 0 20px; 
+}
+
+.settings-nav { background: white; border-radius: 12px; border: 1px solid #e2e8f0; padding: 15px; }
+
+.nav-item { 
+    padding: 12px 15px; 
+    border-radius: 8px; 
+    cursor: pointer; 
+    display: flex; 
+    align-items: center; 
+    gap: 10px; 
+    font-weight: 600; 
+    color: var(--text-slate); 
+    transition: 0.2s; 
+    margin-bottom: 5px; 
+}
+.nav-item:hover, .nav-item.active { background: #eff6ff; color: var(--accent); }
+
+.avatar-large { 
+    width: 80px; height: 80px; 
+    background: var(--accent); 
+    border-radius: 50%; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    color: white; 
+    font-size: 2rem; 
+}
+
+/* --- TARJETA DE ALMACENAMIENTO --- */
+.storage-card { background: var(--ui-dark); color: white; padding: 25px; border-radius: 12px; margin-top: 20px; }
+.progress-bar { height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; margin: 15px 0; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--success); width: 65%; }
