@@ -28,7 +28,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
-    <script src="js/api.js"></script>
+    <script src="js/config.js"></script>
 
     <script>
         async function ejecutarLogin() {
@@ -45,24 +45,27 @@
             btn.style.pointerEvents = "none"; 
 
             try {
-                // LLAMADA A LA FUNCIÓN login() DE api.js
-                // Esta función usa 'sb.auth.signInWithPassword'
-                const sessionData = await login(email, pass);
+                // USAMOS DIRECTAMENTE EL CLIENTE DE CONFIG.JS
+                const { data, error } = await client.auth.signInWithPassword({
+                    email: email,
+                    password: pass,
+                });
+
+                if (error) throw error;
+
+                // Guardamos la sesión localmente
+                localStorage.setItem('geo_session', JSON.stringify(data.session));
                 
-                console.log("Sesión iniciada con éxito:", sessionData);
-                
-                // IMPORTANTE: Redirigimos a admin.html porque es la página 
-                // que ya tenemos migrada a las tablas de Supabase.
+                console.log("Login exitoso en Supabase");
                 window.location.href = "admin.html";
                 
             } catch (error) {
                 console.error("Detalles del error:", error);
                 
-                // Si ves este alert, es que Supabase está respondiendo (no Google)
                 if (error.message === "Invalid login credentials") {
-                    alert("Credenciales incorrectas en Supabase. Verifica el usuario en tu panel.");
+                    alert("Credenciales incorrectas. Verifica en tu panel de Supabase.");
                 } else {
-                    alert("Error de Conexión: " + error.message);
+                    alert("Error: " + error.message);
                 }
                 
                 btn.innerText = "INGRESAR";
