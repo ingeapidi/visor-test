@@ -26,10 +26,13 @@
         </p>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <script src="js/api.js"></script>
 
     <script>
-        async function login() {
+        // Renombramos la función local para evitar conflicto con login() de api.js
+        async function ejecutarLogin() {
             const email = document.getElementById('userEmail').value;
             const pass = document.getElementById('userPass').value;
             const btn = document.getElementById('loginBtn');
@@ -40,23 +43,38 @@
             }
 
             btn.innerText = "VERIFICANDO...";
+            btn.style.pointerEvents = "none"; // Evita múltiples clics
 
-            // USAMOS LA FUNCIÓN CENTRALIZADA DE api.js
-            const result = await callApi('login', { email: email, password: pass });
-
-            if (result.success) {
-                // Guardamos la sesión y redirigimos
-                localStorage.setItem('usuario', JSON.stringify(result.data));
+            try {
+                // LLAMADA A LA FUNCIÓN NATIVA DE SUPABASE DEFINIDA EN api.js
+                const sessionData = await login(email, pass);
+                
+                // Si llegamos aquí, el login fue exitoso (api.js ya guardó la sesión)
                 window.location.href = "inicio.html";
-            } else {
-                alert("Error: " + result.message);
+                
+            } catch (error) {
+                console.error("Error de acceso:", error);
+                
+                // Manejo amigable de errores de Supabase
+                if (error.message === "Invalid login credentials") {
+                    alert("Correo o contraseña incorrectos");
+                } else {
+                    alert("Error: " + error.message);
+                }
+                
                 btn.innerText = "INGRESAR";
+                btn.style.pointerEvents = "auto";
             }
         }
 
         document.getElementById('loginBtn').addEventListener('click', (e) => {
             e.preventDefault();
-            login();
+            ejecutarLogin();
+        });
+
+        // Permitir login al presionar Enter
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') ejecutarLogin();
         });
     </script>
 </body>
