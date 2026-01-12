@@ -67,7 +67,6 @@
 
     <script src="js/api.js"></script>
     <script>
-        // 1. Cargar los espacios existentes del usuario al abrir la página
         async function cargarEspacios() {
             const usuario = verificarSesion();
             if(!usuario) return;
@@ -80,8 +79,8 @@
                     const select = document.getElementById('selectEspacio');
                     result.data.espacios.forEach(esp => {
                         const opt = document.createElement('option');
-                        opt.value = esp[0]; // ID del espacio (Ej: ESP-123)
-                        opt.innerText = esp[2]; // Nombre del espacio
+                        opt.value = esp[0]; 
+                        opt.innerText = esp[2]; 
                         select.add(opt, select.options[1]);
                     });
                 }
@@ -113,32 +112,30 @@
             btn.disabled = true;
 
             try {
-                // PASO A: Si el espacio es nuevo, lo creamos primero y obtenemos su ID
+                // PASO A: Crear Espacio si es necesario
                 if (idEspacioFinal === "NUEVO") {
                     const nombreE = document.getElementById('nombreNuevoEspacio').value;
-                    if(!nombreE) { 
-                        alert("Nombre del espacio requerido"); 
-                        btn.disabled = false; 
-                        btn.innerText = "CREAR PROYECTO Y FINALIZAR";
-                        return; 
-                    }
+                    if(!nombreE) throw new Error("Debes asignar un nombre al nuevo espacio.");
                     
+                    console.log("Solicitando creación de nuevo espacio...");
                     const resE = await callApi('crear_espacio', {
                         id_usuario: usuario.id,
                         nombre: nombreE,
-                        descripcion: "Creado desde panel de proyectos",
+                        descripcion: "Espacio creado desde Formulario",
                         email: usuario.email
                     });
                     
-                    if (resE.success) {
-                        // CAPTURAMOS EL ID REAL QUE GENERÓ GOOGLE (Ej: ESP-456)
+                    // Verificación estricta del ID devuelto por Apps Script
+                    if (resE && resE.success && resE.data && resE.data.id_creado) {
                         idEspacioFinal = resE.data.id_creado;
+                        console.log("Nuevo ID de espacio obtenido:", idEspacioFinal);
                     } else {
-                        throw new Error("No se pudo crear el espacio: " + resE.message);
+                        throw new Error("El espacio se creó pero no se recibió el ID de vinculación. Por favor, selecciona el espacio manualmente de la lista.");
                     }
                 }
 
-                // PASO B: Crear el proyecto vinculado al ID del espacio (el existente o el nuevo)
+                // PASO B: Crear el Proyecto vinculado
+                console.log("Asociando proyecto al espacio:", idEspacioFinal);
                 const resP = await callApi('crear_proyecto', {
                     id_espacio: idEspacioFinal,
                     nombre: proyNombre,
@@ -148,15 +145,15 @@
                 });
 
                 if (resP.success) {
-                    alert("¡Éxito! Espacio y Proyecto configurados correctamente.");
+                    alert("¡Configuración completada! Proyecto y espacio guardados.");
                     window.location.href = 'admin.html';
                 } else {
-                    alert("Error al crear proyecto: " + resP.message);
+                    throw new Error("Error al crear el proyecto: " + resP.message);
                 }
 
             } catch (error) {
-                console.error("Error en el proceso:", error);
-                alert(error.message);
+                console.error("Fallo en la creación:", error);
+                alert("Aviso: " + error.message);
             } finally {
                 btn.disabled = false;
                 btn.innerText = "CREAR PROYECTO Y FINALIZAR";
