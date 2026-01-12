@@ -20,25 +20,132 @@
             <p style="color:var(--text-slate); margin-bottom:30px;">Defina el espacio de trabajo y cargue los insumos técnicos.</p>
             
             <label>Espacio de Trabajo</label>
-            <select>
-                <option>DIVISIÓN NORTE</option>
-                <option>ÁREA INFRAESTRUCTURA</option>
-                <option>+ Crear Nuevo Espacio</option>
+            <select id="selectEspacio" onchange="verificarNuevoEspacio()">
+                <option value="">-- Seleccionar Espacio --</option>
+                <option value="NUEVO">+ Crear Nuevo Espacio</option>
             </select>
 
-            <label>Nombre del Proyecto</label>
-            <input type="text" placeholder="Ej: Relevamiento Dique 4 - Fase 2">
-
-            <label>Archivos del Relevamiento (TIF, LAS, DXF)</label>
-            <div class="upload-zone" onclick="alert('Buscador de archivos abierto...')">
-                <i class="fas fa-cloud-upload-alt" style="font-size: 2.5rem; color: var(--accent); margin-bottom: 10px;"></i>
-                <p>Arrastre sus archivos aquí o haga clic para buscar</p>
+            <div id="sectionNuevoEspacio" style="display:none; margin-top: 10px; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px dashed var(--accent);">
+                <label>Nombre del Nuevo Espacio</label>
+                <input type="text" id="nombreNuevoEspacio" placeholder="Ej: MINA SANTA RITA">
             </div>
 
-            <button class="btn btn-primary" style="width:100%; margin-top:30px; justify-content:center;" onclick="location.href='admin.html'">
-                CREAR PROYECTO Y EMPEZAR CARGA
+            <div style="margin-top: 20px;">
+                <label>Nombre del Proyecto</label>
+                <input type="text" id="proyNombre" placeholder="Ej: Relevamiento Lidar - Dique 4">
+
+                <label>Cliente / Mandante</label>
+                <input type="text" id="proyCliente" placeholder="Ej: Minera Alumbrera S.A.">
+
+                <label>Ubicación Referencial</label>
+                <input type="text" id="proyUbicacion" placeholder="Ej: Catamarca, Argentina">
+            </div>
+
+            <label>Archivos del Relevamiento (Simulación)</label>
+            <div class="upload-zone">
+                <i class="fas fa-cloud-upload-alt" style="font-size: 2.5rem; color: var(--accent); margin-bottom: 10px;"></i>
+                <p>Los archivos se asociarán al proyecto una vez creado</p>
+            </div>
+
+            <button id="btnCrear" class="btn btn-primary" style="width:100%; margin-top:30px; justify-content:center;">
+                CREAR PROYECTO Y FINALIZAR
             </button>
         </div>
     </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        // 1. Cargar los espacios existentes del usuario al abrir la página
+        async function cargarEspacios() {
+            const usuario = verificarSesion();
+            if(!usuario) return;
+
+            try {
+                const res = await fetch(`${API_URL}?action=obtener_datos_admin&id_usuario=${usuario.id}`);
+                const result = await res.json();
+
+                if (result.success) {
+                    const select = document.getElementById('selectEspacio');
+                    // Insertamos los espacios antes de la última opción (Crear Nuevo)
+                    result.data.espacios.forEach(esp => {
+                        const opt = document.createElement('option');
+                        opt.value = esp[0]; // ID del espacio
+                        opt.innerText = esp[2]; // Nombre del espacio
+                        select.add(opt, select.options[1]);
+                    });
+                }
+            } catch (e) { console.error("Error cargando espacios", e); }
+        }
+
+        function verificarNuevoEspacio() {
+            const select = document.getElementById('selectEspacio');
+            const section = document.getElementById('sectionNuevoEspacio');
+            section.style.display = (select.value === "NUEVO") ? "block" : "none";
+        }
+
+        async function ejecutarCreacion() {
+            const usuario = verificarSesion();
+            const btn = document.getElementById('btnCrear');
+            const select = document.getElementById('selectEspacio');
+            
+            let idEspacio = select.value;
+            const proyNombre = document.getElementById('proyNombre').value;
+            const proyCliente = document.getElementById('proyCliente').value;
+            const proyUbicacion = document.getElementById('proyUbicacion').value;
+
+            if (!idEspacio || !proyNombre) {
+                alert("Por favor selecciona un espacio y asigna un nombre al proyecto.");
+                return;
+            }
+
+            btn.innerText = "PROCESANDO...";
+            btn.disabled = true;
+
+            // PASO A: Si el espacio es nuevo, lo creamos primero
+            if (idEspacio === "NUEVO") {
+                const nombreE = document.getElementById('nombreNuevoEspacio').value;
+                if(!nombreE) { alert("Nombre del espacio requerido"); btn.disabled = false; return; }
+                
+                const resE = await callApi('crear_espacio', {
+                    id_usuario: usuario.id,
+                    nombre: nombreE,
+                    descripcion: "Creado desde panel de proyectos",
+                    email: usuario.email
+                });
+                
+                // Nota: En un sistema real, el servidor debería devolvernos el nuevo ID.
+                // Para este prototipo, pediremos al usuario que recargue o usaremos una lógica de re-intento.
+                // Por ahora, asumiremos que se creó y pediremos que use un espacio existente 
+                // para asegurar que el ID sea correcto en esta fase.
+                alert("Espacio creado. Por seguridad en esta fase, por favor selecciónalo de la lista.");
+                location.reload();
+                return;
+            }
+
+            // PASO B: Crear el proyecto vinculado al ID del espacio
+            const resP = await callApi('crear_proyecto', {
+                id_espacio: idEspacio,
+                nombre: proyNombre,
+                cliente: proyCliente,
+                contratista: usuario.empresa,
+                ubicacion: proyUbicacion
+            });
+
+            if (resP.success) {
+                alert("¡Proyecto creado con éxito en Google Sheets!");
+                window.location.href = 'admin.html';
+            } else {
+                alert("Error: " + resP.message);
+                btn.disabled = false;
+                btn.innerText = "CREAR PROYECTO Y FINALIZAR";
+            }
+        }
+
+        window.onload = () => {
+            inicializarInterfaz();
+            cargarEspacios();
+            document.getElementById('btnCrear').onclick = ejecutarCreacion;
+        };
+    </script>
 </body>
 </html>
