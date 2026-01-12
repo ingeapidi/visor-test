@@ -12,9 +12,60 @@
             <i class="fas fa-satellite-dish"></i> GEOPORTAL CLOUD
         </div>
         <h2>Acceso al Sistema</h2>
-        <input type="email" placeholder="Correo electrónico" style="width:100%; padding:12px; margin: 15px 0; border:1px solid #cbd5e1; border-radius:8px;">
-        <input type="password" placeholder="Contraseña" style="width:100%; padding:12px; margin-bottom:20px; border:1px solid #cbd5e1; border-radius:8px;">
-        <a href="inicio.html" class="btn btn-primary" style="width:100%; justify-content: center;">INGRESAR</a>
+        
+        <input type="email" id="userEmail" placeholder="Correo electrónico" style="width:100%; padding:12px; margin: 15px 0; border:1px solid #cbd5e1; border-radius:8px;">
+        
+        <input type="password" id="userPass" placeholder="Contraseña" style="width:100%; padding:12px; margin-bottom:20px; border:1px solid #cbd5e1; border-radius:8px;">
+        
+        <a href="#" id="loginBtn" class="btn btn-primary" style="width:100%; justify-content: center;">INGRESAR</a>
     </div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbz7SoDrtjnHMr_LLIHu0xqosDWcEk3Y9CceA02HuMSee4_j6B21Pjb051wV0MmuG9voTQ/exec";
+
+        async function login() {
+            const email = document.getElementById('userEmail').value;
+            const pass = document.getElementById('userPass').value;
+            const btn = document.getElementById('loginBtn');
+
+            if (!email || !pass) {
+                alert("Por favor, completa todos los campos");
+                return;
+            }
+
+            btn.innerText = "VERIFICANDO...";
+
+            try {
+                // Enviamos la petición al Apps Script
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'login',
+                        payload: { email: email, password: pass }
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Guardamos los datos del usuario para usarlos en Perfil y Admin
+                    localStorage.setItem('usuario', JSON.stringify(result.data));
+                    window.location.href = "inicio.html";
+                } else {
+                    alert("Error: " + result.message);
+                    btn.innerText = "INGRESAR";
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Hubo un problema con la conexión");
+                btn.innerText = "INGRESAR";
+            }
+        }
+
+        document.getElementById('loginBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            login();
+        });
+    </script>
 </body>
 </html>
