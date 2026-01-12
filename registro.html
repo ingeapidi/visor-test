@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Registro - Geoportal Cloud</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body style="display: flex; align-items: center; justify-content: center; height: 100vh;">
+
+    <div class="card" style="width: 100%; max-width: 450px; text-align: center;">
+        <div class="logo" style="justify-content: center; margin-bottom: 20px;">
+            <i class="fas fa-satellite-dish"></i> GEOPORTAL CLOUD
+        </div>
+        <h2 style="margin-bottom: 10px;">Crear Nueva Cuenta</h2>
+        <p style="color: var(--text-slate); font-size: 0.85rem; margin-bottom: 25px;">Únase a la plataforma de gestión geoespacial</p>
+        
+        <input type="text" id="regNombre" placeholder="Nombre completo" required>
+        <input type="text" id="regEmpresa" placeholder="Empresa / Organización" required>
+        <input type="email" id="regEmail" placeholder="Correo electrónico" required>
+        <input type="password" id="regPass" placeholder="Contraseña" required>
+        
+        <button id="regBtn" class="btn btn-primary" style="width:100%; justify-content: center; margin-top: 10px;">
+            REGISTRARME
+        </button>
+
+        <p style="margin-top: 20px; font-size: 0.85rem;">
+            ¿Ya tienes cuenta? <a href="index.html" style="color: var(--accent); font-weight: bold; text-decoration: none;">Inicia sesión aquí</a>
+        </p>
+    </div>
+
+    <script src="js/api.js"></script>
+
+    <script>
+        async function registrar() {
+            const nombre = document.getElementById('regNombre').value;
+            const empresa = document.getElementById('regEmpresa').value;
+            const email = document.getElementById('regEmail').value;
+            const pass = document.getElementById('regPass').value;
+            const btn = document.getElementById('regBtn');
+
+            // Validación simple
+            if (!nombre || !empresa || !email || !pass) {
+                alert("Por favor, completa todos los campos para el registro");
+                return;
+            }
+
+            btn.innerText = "PROCESANDO...";
+            btn.disabled = true;
+
+            // LLAMADA A LA API CENTRALIZADA
+            const result = await callApi('registrar', { 
+                nombre: nombre, 
+                empresa: empresa, 
+                email: email, 
+                password: pass 
+            });
+
+            if (result.success) {
+                alert("¡Cuenta creada con éxito! Por favor, inicia sesión.");
+                window.location.href = "index.html";
+            } else {
+                alert("Error en el registro: " + result.message);
+                btn.innerText = "REGISTRARME";
+                btn.disabled = false;
+            }
+        }
+
+        document.getElementById('regBtn').addEventListener('click', registrar);
+    </script>
+</body>
+</html>
