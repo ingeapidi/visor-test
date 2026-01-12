@@ -6,13 +6,10 @@
     <link rel="stylesheet" href="css/styles.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* Sobrescribimos el bloqueo del body solo para esta página */
         body {
             overflow-y: auto !important; 
             height: auto !important;
         }
-        
-        /* Aseguramos que el contenedor tenga espacio al final para que no quede pegado */
         .form-container {
             padding-bottom: 100px;
         }
@@ -67,6 +64,7 @@
 
     <script src="js/api.js"></script>
     <script>
+        // Función para cargar espacios (la usaremos al inicio y en caso de error)
         async function cargarEspacios() {
             const usuario = verificarSesion();
             if(!usuario) return;
@@ -77,12 +75,16 @@
 
                 if (result.success) {
                     const select = document.getElementById('selectEspacio');
+                    // Limpiar opciones previas manteniendo las dos primeras
+                    while (select.options.length > 2) { select.remove(2); }
+                    
                     result.data.espacios.forEach(esp => {
                         const opt = document.createElement('option');
                         opt.value = esp[0]; 
                         opt.innerText = esp[2]; 
                         select.add(opt, select.options[1]);
                     });
+                    console.log("Espacios cargados correctamente.");
                 }
             } catch (e) { console.error("Error cargando espacios", e); }
         }
@@ -100,11 +102,9 @@
             
             let idEspacioFinal = select.value;
             const proyNombre = document.getElementById('proyNombre').value;
-            const proyCliente = document.getElementById('proyCliente').value;
-            const proyUbicacion = document.getElementById('proyUbicacion').value;
 
             if (!idEspacioFinal || !proyNombre) {
-                alert("Por favor selecciona un espacio y asigna un nombre al proyecto.");
+                alert("Por favor completa los campos obligatorios.");
                 return;
             }
 
@@ -112,48 +112,46 @@
             btn.disabled = true;
 
             try {
-                // PASO A: Crear Espacio si es necesario
+                // PASO A: Crear Espacio si es nuevo
                 if (idEspacioFinal === "NUEVO") {
                     const nombreE = document.getElementById('nombreNuevoEspacio').value;
                     if(!nombreE) throw new Error("Debes asignar un nombre al nuevo espacio.");
                     
-                    console.log("Solicitando creación de nuevo espacio...");
                     const resE = await callApi('crear_espacio', {
-                        id_usuario: usuario.id,
+                        id_usuario: usuario.id, // VITAL para que aparezca en tu cuenta
                         nombre: nombreE,
-                        descripcion: "Espacio creado desde Formulario",
+                        descripcion: "Espacio automático",
                         email: usuario.email
                     });
                     
-                    // Verificación estricta del ID devuelto por Apps Script
                     if (resE && resE.success && resE.data && resE.data.id_creado) {
                         idEspacioFinal = resE.data.id_creado;
-                        console.log("Nuevo ID de espacio obtenido:", idEspacioFinal);
                     } else {
-                        throw new Error("El espacio se creó pero no se recibió el ID de vinculación. Por favor, selecciona el espacio manualmente de la lista.");
+                        // REPARACIÓN: Si falló la confirmación, refrescamos la lista y avisamos
+                        await cargarEspacios();
+                        throw new Error("El servidor creó el espacio pero no confirmó el ID. Se ha actualizado la lista, por favor selecciónalo e intenta crear el proyecto de nuevo.");
                     }
                 }
 
                 // PASO B: Crear el Proyecto vinculado
-                console.log("Asociando proyecto al espacio:", idEspacioFinal);
                 const resP = await callApi('crear_proyecto', {
                     id_espacio: idEspacioFinal,
                     nombre: proyNombre,
-                    cliente: proyCliente,
+                    cliente: document.getElementById('proyCliente').value,
                     contratista: usuario.empresa,
-                    ubicacion: proyUbicacion
+                    ubicacion: document.getElementById('proyUbicacion').value
                 });
 
                 if (resP.success) {
-                    alert("¡Configuración completada! Proyecto y espacio guardados.");
+                    alert("¡Configuración completada con éxito!");
                     window.location.href = 'admin.html';
                 } else {
                     throw new Error("Error al crear el proyecto: " + resP.message);
                 }
 
             } catch (error) {
-                console.error("Fallo en la creación:", error);
-                alert("Aviso: " + error.message);
+                alert("Aviso del sistema: " + error.message);
+                console.error("Detalle técnico:", error);
             } finally {
                 btn.disabled = false;
                 btn.innerText = "CREAR PROYECTO Y FINALIZAR";
