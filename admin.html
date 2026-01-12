@@ -2,69 +2,185 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Administración - Geoportal Cloud</title>
-    <link rel="stylesheet" href="css/styles.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        main { display: flex; height: calc(100vh - 60px); overflow: hidden; }
-        #sidebar { width: 280px; background: var(--sidebar-bg); color: #cbd5e1; display: flex; flex-direction: column; flex-shrink: 0; }
-        #content { flex-grow: 1; overflow-y: auto; padding: 30px; }
-        .project-tree { padding: 20px 0; }
-        .tree-item { padding: 10px 20px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: 0.2s; font-size: 0.9rem; text-decoration: none; color: inherit;}
-        .tree-item:hover { background: rgba(255,255,255,0.05); color: white; }
-        .active-project { background: rgba(37, 99, 235, 0.15); color: #60a5fa; border-right: 3px solid var(--accent); }
-        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
+        :root {
+            --ui-dark: #0f172a;
+            --sidebar-bg: #1e293b;
+            --accent: #2563eb;
+            --bg-main: #f1f5f9;
+            --border: rgba(0,0,0,0.1);
+            --text-light: #f8fafc;
+        }
+        
+        body { margin: 0; font-family: 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column; height: 100vh; background: var(--bg-main); overflow: hidden; }
+
+        /* --- 1. BARRA SUPERIOR (HEADER) --- */
+        header { 
+            height: 60px; 
+            background: var(--ui-dark); 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            padding: 0 20px; 
+            border-bottom: 1px solid rgba(255,255,255,0.1); 
+            z-index: 100; 
+            color: white;
+        }
+        .logo { font-weight: 800; font-size: 1.2rem; color: #60a5fa; cursor: pointer; display: flex; align-items: center; gap: 10px; text-decoration: none; }
+        .header-title { font-weight: 600; font-size: 0.9rem; opacity: 0.8; letter-spacing: 1px; }
+        .user-access { display: flex; align-items: center; gap: 15px; cursor: pointer; }
+
+        /* --- CONTENEDOR PRINCIPAL --- */
+        main { display: flex; flex-grow: 1; overflow: hidden; }
+
+        /* --- 2. PANEL LATERAL IZQUIERDO (EXPLORADOR) --- */
+        #sidebar-projects { width: 280px; background: var(--sidebar-bg); color: #cbd5e1; display: flex; flex-direction: column; flex-shrink: 0; border-right: 1px solid var(--border); }
+        
+        .btn-create-container { padding: 20px; }
+        .btn-create { width: 100%; background: var(--accent); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-create:hover { background: #1d4ed8; transform: translateY(-1px); }
+
+        .project-tree { flex-grow: 1; overflow-y: auto; padding-bottom: 20px; }
+        .tree-title { padding: 10px 20px; font-size: 0.7rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
+        .workspace-item { padding: 10px 20px; cursor: pointer; display: flex; align-items: center; gap: 12px; font-weight: 600; font-size: 0.85rem; transition: 0.2s; }
+        .workspace-item:hover { background: rgba(255,255,255,0.05); color: white; }
+        
+        .project-sub-item { padding: 8px 20px 8px 48px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 0.8rem; opacity: 0.7; transition: 0.2s; text-decoration: none; color: inherit; }
+        .project-sub-item.active { background: rgba(37, 99, 235, 0.15); color: #60a5fa; opacity: 1; border-right: 3px solid var(--accent); }
+
+        /* --- 3. ÁREA DE CONTENIDO (DASHBOARD) --- */
+        #dashboard-content { flex-grow: 1; overflow-y: auto; padding: 30px; box-sizing: border-box; }
+
+        .global-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 40px; }
+        .stat-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+        .stat-card small { font-size: 0.7rem; font-weight: 800; color: #64748b; text-transform: uppercase; }
+        .stat-card .value { font-size: 1.6rem; font-weight: 800; margin: 8px 0; color: #0f172a; }
+
+        .detail-section { background: white; border-radius: 15px; padding: 30px; border: 1px solid #e2e8f0; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
+        .detail-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px; }
+        
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 20px; }
+        .info-box { background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #f1f5f9; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9rem; }
+        th { text-align: left; padding: 12px; border-bottom: 2px solid #f1f5f9; color: #64748b; }
+        td { padding: 12px; border-bottom: 1px solid #f1f5f9; color: #334155; }
     </style>
 </head>
 <body>
-    <header>
-        <a href="inicio.html" class="logo"><i class="fas fa-satellite-dish"></i> GEOPORTAL CLOUD</a>
-        <div style="display:flex; gap:20px; align-items:center;">
-            <span>Ing. Juan Pérez</span>
-            <a href="perfil.html" style="color:white;"><i class="fas fa-cog"></i></a>
+
+<header>
+    <div class="logo" onclick="location.href='inicio.html'">
+        <i class="fas fa-satellite-dish"></i> GEOPORTAL CLOUD
+    </div>
+    <div class="header-title">PANEL DE CONTROL GENERAL</div>
+    <div class="user-access">
+        <div style="text-align: right;"><small>Ing. Juan Pérez</small><br><b style="font-size: 0.7em; opacity: 0.6;">ADMINISTRADOR</b></div>
+        <i class="fas fa-user-circle" style="font-size: 1.5rem;"></i>
+        <i class="fas fa-cog" style="opacity: 0.5; cursor: pointer;" title="Configuración de Cuenta" onclick="location.href='perfil.html'"></i>
+    </div>
+</header>
+
+<main>
+    <aside id="sidebar-projects">
+        <div class="btn-create-container">
+            <button class="btn-create" onclick="location.href='nuevo.html'">
+                <i class="fas fa-plus"></i> CREAR NUEVO
+            </button>
         </div>
-    </header>
+        
+        <div class="project-tree">
+            <div class="tree-title">Espacios de Trabajo</div>
+            <div class="workspace-item"><i class="fas fa-folder-open" style="color: #f59e0b;"></i> DIVISIÓN NORTE</div>
+            <div class="project-sub-item"><i class="fas fa-map"></i> Exploración Veta A</div>
+            <div class="project-sub-item active"><i class="fas fa-map"></i> Vuelo Lidar Dique 4</div>
 
-    <main>
-        <aside id="sidebar">
-            <div style="padding: 20px;">
-                <a href="nuevo.html" class="btn btn-primary" style="width:100%; justify-content:center;"><i class="fas fa-plus"></i> CREAR NUEVO</a>
-            </div>
-            <div class="project-tree">
-                <div style="padding: 0 20px 10px; font-size: 0.7rem; font-weight: 800; color: #64748b; text-transform: uppercase;">Espacios de Trabajo</div>
-                <div class="tree-item"><i class="fas fa-folder-open" style="color: #f59e0b;"></i> DIVISIÓN NORTE</div>
-                <a href="#" class="tree-item active-project"><i class="fas fa-map"></i> Vuelo Lidar Dique 4</a>
-                <div class="tree-item"><i class="fas fa-folder" style="color: #94a3b8;"></i> INFRAESTRUCTURA</div>
-            </div>
-        </aside>
+            <div class="workspace-item" style="margin-top: 15px;"><i class="fas fa-folder" style="color: #94a3b8;"></i> ÁREA INFRAESTRUCTURA</div>
+            <div class="project-sub-item"><i class="fas fa-map"></i> Puente Río Salado</div>
+        </div>
+    </aside>
 
-        <div id="content">
-            <div class="stats-grid">
-                <div class="card"><small>ALMACENAMIENTO</small><h3>2.84 TB</h3></div>
-                <div class="card"><small>PROYECTOS</small><h3>14</h3></div>
-                <div class="card"><small>INGESTAS</small><h3>42</h3></div>
-                <div class="card" style="border-right: 4px solid #ef4444;"><small>ALERTAS</small><h3 style="color:#ef4444">3</h3></div>
+    <div id="dashboard-content">
+        <div class="global-stats">
+            <div class="stat-card">
+                <small>Almacenamiento Total</small>
+                <div class="value">2.84 TB</div>
+                <div style="font-size: 0.75rem; color: #10b981;"><b>12%</b> de incremento</div>
             </div>
+            <div class="stat-card">
+                <small>Proyectos Activos</small>
+                <div class="value">14</div>
+                <div style="font-size: 0.75rem; color: #64748b;">En 4 Espacios</div>
+            </div>
+            <div class="stat-card">
+                <small>Ingestas del Mes</small>
+                <div class="value">42</div>
+                <div style="font-size: 0.75rem; color: #10b981;"><b>100%</b> procesadas</div>
+            </div>
+            <div class="stat-card" style="border-right: 4px solid #ef4444;">
+                <small>Alertas de Auditoría</small>
+                <div class="value" style="color:#ef4444;">3</div>
+                <div style="font-size: 0.75rem; color: #64748b;">Requieren revisión</div>
+            </div>
+        </div>
 
-            <div class="card">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                    <h2>Vuelo Lidar Dique 4</h2>
-                    <a href="visor.html" class="btn btn-primary">IR AL VISOR</a>
+        <div class="detail-section">
+            <div class="detail-header">
+                <div>
+                    <h2 style="margin:0; color:#0f172a;">Vuelo Lidar Dique 4</h2>
+                    <p style="margin:5px 0 0; color:#64748b;">Ubicación: Sector Minero Oeste | Contratista: GeoSurvey S.A.</p>
                 </div>
-                <p style="color:var(--text-slate)">Estado de archivos y capas disponibles en este relevamiento:</p>
-                <table style="width:100%; border-collapse:collapse; margin-top:20px;">
-                    <tr style="text-align:left; border-bottom:1px solid #e2e8f0; color:var(--text-slate); font-size:0.8rem;">
-                        <th style="padding:10px;">CAPA</th><th style="padding:10px;">TIPO</th><th style="padding:10px;">TAMAÑO</th><th style="padding:10px;">ESTADO</th>
-                    </tr>
-                    <tr style="font-size:0.9rem; border-bottom:1px solid #f1f5f9;">
-                        <td style="padding:15px;"><strong>MDT_Superficie.tif</strong></td><td>MDT</td><td>8.4 GB</td><td style="color:#10b981">LISTO</td>
-                    </tr>
-                    <tr style="font-size:0.9rem;">
-                        <td style="padding:15px;"><strong>Nube_Lidar.las</strong></td><td>LAS</td><td>24.1 GB</td><td style="color:#10b981">LISTO</td>
-                    </tr>
-                </table>
+                <button style="padding: 10px 15px; background: white; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.8rem;" onclick="location.href='visor.html'">
+                    <i class="fas fa-external-link-alt"></i> IR AL VISOR
+                </button>
             </div>
+
+            <div class="info-grid">
+                <div class="info-box">
+                    <small style="color:#64748b; font-weight: bold;">SISTEMA DETECTADO</small>
+                    <p style="margin:5px 0 0; font-weight: bold;">POSGAR 07 / ARG 4</p>
+                </div>
+                <div class="info-box">
+                    <small style="color:#64748b; font-weight: bold;">PRECISIÓN Z (RMSE)</small>
+                    <p style="margin:5px 0 0; font-weight: bold; color: #10b981;">0.038 m</p>
+                </div>
+                <div class="info-box">
+                    <small style="color:#64748b; font-weight: bold;">ÚLTIMA ACTUALIZACIÓN</small>
+                    <p style="margin:5px 0 0; font-weight: bold;">Hace 2 días</p>
+                </div>
+            </div>
+
+            <h4 style="margin: 30px 0 10px; color:#475569;">Archivos Disponibles</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Capa</th>
+                        <th>Tipo</th>
+                        <th>Tamaño</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>MDT_Superficie_D4.tif</strong></td>
+                        <td>Elevación (MDT)</td>
+                        <td>8.4 GB</td>
+                        <td><span style="color:#10b981; font-weight: bold;">LISTO</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Nube_Puntos_Lidar.las</strong></td>
+                        <td>Vectorial (LAS)</td>
+                        <td>24.1 GB</td>
+                        <td><span style="color:#10b981; font-weight: bold;">LISTO</span></td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
-    </main>
+    </div>
+</main>
+
 </body>
 </html>
