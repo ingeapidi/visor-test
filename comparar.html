@@ -2,45 +2,166 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Comparación - Geoportal Cloud</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comparación Temporal - Geoportal Cloud</title>
+    
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css" rel="stylesheet">
+
     <style>
-        body { height: 100vh; display: flex; flex-direction: column; background: #0f172a; color: white; }
-        .split-view { flex-grow: 1; display: flex; position: relative; }
-        .side-panel { width: 300px; background: #1e293b; padding: 25px; }
-        .map-container { flex-grow: 1; background: #000; display: flex; align-items: center; justify-content: center; position: relative; }
-        .slider-divider { width: 4px; background: white; height: 100%; position: absolute; left: 50%; cursor: col-resize; z-index: 10; }
+        :root {
+            --ui-dark: #0f172a;
+            --ui-sidebar: #1e293b;
+            --accent: #2563eb;
+            --text: #f8fafc;
+            --border: rgba(255,255,255,0.1);
+        }
+        
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; height: 100vh; background: var(--ui-dark); color: var(--text); overflow: hidden; }
+
+        /* HEADER CONSISTENTE */
+        header { height: 60px; background: var(--ui-dark); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 1px solid var(--border); z-index: 100; }
+        .logo { font-weight: 800; color: #60a5fa; cursor: pointer; display: flex; align-items: center; gap: 10px; text-decoration: none; }
+        .user-info { display: flex; align-items: center; gap: 12px; font-size: 0.85em; }
+
+        /* ESTRUCTURA TRIPARTITA */
+        main { display: flex; flex-grow: 1; position: relative; overflow: hidden; }
+
+        .side-panel { width: 280px; background: var(--ui-sidebar); display: flex; flex-direction: column; border: 1px solid var(--border); z-index: 10; }
+        .panel-header { padding: 20px; border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.2); }
+        .project-selector { width: 100%; background: #0f172a; color: white; border: 1px solid var(--accent); padding: 10px; border-radius: 6px; margin-top: 10px; font-size: 0.85em; outline: none; }
+        
+        .layer-list { padding: 15px; flex-grow: 1; overflow-y: auto; }
+        .layer-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 0.85em; }
+        .layer-card i { margin-right: 8px; }
+
+        /* VISOR CENTRAL CON SLIDER */
+        #comparison-container { flex-grow: 1; position: relative; background: #000; }
+        #map { width: 100%; height: 100%; }
+        
+        /* Simulación del Slider Central (Prototype UI) */
+        .swipe-handle { position: absolute; top: 0; bottom: 0; left: 50%; width: 4px; background: white; z-index: 5; cursor: col-resize; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
+        .swipe-handle::after { content: '↔'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; background: white; color: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+
+        .view-label { position: absolute; top: 20px; padding: 8px 15px; background: rgba(15, 23, 42, 0.8); border-radius: 6px; font-size: 0.75em; font-weight: bold; letter-spacing: 1px; z-index: 4; border: 1px solid var(--accent); }
+        .label-left { left: 20px; color: #60a5fa; }
+        .label-right { right: 20px; color: #f59e0b; }
+
+        /* FOOTER TÉCNICO */
+        footer { height: 35px; background: var(--ui-dark); border-top: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; font-family: 'Courier New', monospace; font-size: 0.75rem; color: #94a3b8; gap: 40px; }
     </style>
 </head>
 <body>
-    <header>
-        <a href="inicio.html" class="logo"><i class="fas fa-satellite-dish"></i> GEOPORTAL CLOUD</a>
-        <span>MODO COMPARACIÓN TEMPORAL</span>
-    </header>
 
-    <main class="split-view">
-        <div class="side-panel">
-            <label>RELEVAMIENTO A (IZQ)</label>
-            <select style="width:100%; padding:10px; margin-top:10px; background:#0f172a; color:white; border:1px solid #2563eb;">
-                <option>Enero 2024</option>
-            </select>
-            <p style="font-size:0.8rem; margin-top:20px; opacity:0.6;">Diferencia de volumen calculada: <b>+ 1,240 m³</b></p>
-        </div>
+<header>
+    <a class="logo" onclick="location.href='inicio.html'">
+        <i class="fas fa-satellite-dish"></i> GEOPORTAL CLOUD
+    </a>
+    <div style="font-weight: bold; font-size: 0.8em; letter-spacing: 1px; text-transform: uppercase; opacity: 0.8;">ANÁLISIS DE COMPARACIÓN TEMPORAL</div>
+    <div class="user-info">
+        <span>Ing. Juan Pérez</span>
+        <i class="fas fa-user-circle" style="font-size: 1.5rem; cursor: pointer;" onclick="location.href='perfil.html'"></i>
+    </div>
+</header>
 
-        <div class="map-container">
-            <div class="slider-divider"></div>
-            <i class="fas fa-arrows-alt-h" style="font-size:2rem; z-index:11;"></i>
-            <span style="position:absolute; left:20%; top:20%; opacity:0.3;">VISTA ANTERIOR</span>
-            <span style="position:absolute; right:20%; top:20%; opacity:0.3;">VISTA ACTUAL</span>
-        </div>
-
-        <div class="side-panel">
-            <label>RELEVAMIENTO B (DER)</label>
-            <select style="width:100%; padding:10px; margin-top:10px; background:#0f172a; color:white; border:1px solid #f59e0b;">
-                <option>Marzo 2024</option>
+<main>
+    <aside class="side-panel">
+        <div class="panel-header">
+            <small style="color: #60a5fa; font-weight: bold; text-transform: uppercase;">Comparativa: Lado Izquierdo</small>
+            <select class="project-selector">
+                <option>— Seleccionar Proyecto —</option>
+                <option selected>Relevamiento Abril 2024</option>
+                <option>Relevamiento Mayo 2024</option>
             </select>
         </div>
-    </main>
+        <div class="layer-list">
+            <div class="layer-card">
+                <span><i class="fas fa-image" style="color:#3b82f6"></i> Orto_Abril.tif</span>
+                <i class="fas fa-eye" style="color:#3b82f6; cursor: pointer;"></i>
+            </div>
+            <div class="layer-card">
+                <span><i class="fas fa-mountain" style="color:#f59e0b"></i> MDT_Abril.tif</span>
+                <i class="fas fa-eye-slash" style="cursor: pointer;"></i>
+            </div>
+        </div>
+        <div style="padding: 15px; border-top: 1px solid var(--border);">
+            <button style="width: 100%; padding: 10px; background: transparent; border: 1px solid #475569; color: white; border-radius: 6px; font-size: 0.8em; cursor: pointer;">
+                <i class="fas fa-info-circle"></i> Metadatos Proyecto A
+            </button>
+        </div>
+    </aside>
+
+    <div id="comparison-container">
+        <div class="view-label label-left">VISTA A: ABRIL 2024</div>
+        <div class="view-label label-right">VISTA B: AGOSTO 2024</div>
+        <div class="swipe-handle"></div>
+        <div id="map"></div>
+    </div>
+
+    <aside class="side-panel">
+        <div class="panel-header">
+            <small style="color: #f59e0b; font-weight: bold; text-transform: uppercase;">Comparativa: Lado Derecho</small>
+            <select class="project-selector">
+                <option>— Seleccionar Proyecto —</option>
+                <option>Relevamiento Julio 2024</option>
+                <option selected>Relevamiento Agosto 2024</option>
+            </select>
+        </div>
+        <div class="layer-list">
+            <div class="layer-card">
+                <span><i class="fas fa-image" style="color:#3b82f6"></i> Orto_Agosto.tif</span>
+                <i class="fas fa-eye" style="color:#3b82f6; cursor: pointer;"></i>
+            </div>
+            <div class="layer-card">
+                <span><i class="fas fa-mountain" style="color:#f59e0b"></i> MDT_Agosto.tif</span>
+                <i class="fas fa-eye-slash" style="cursor: pointer;"></i>
+            </div>
+            <div class="layer-card">
+                <span><i class="fas fa-draw-polygon" style="color:#10b981"></i> Poligonos_Acopio.dxf</span>
+                <i class="fas fa-eye" style="color:#10b981; cursor: pointer;"></i>
+            </div>
+        </div>
+        <div style="padding: 15px; border-top: 1px solid var(--border);">
+            <button style="width: 100%; padding: 12px; background: var(--accent); border: none; color: white; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.8em;">
+                <i class="fas fa-calculator"></i> Diferencia de Volúmenes
+            </button>
+        </div>
+    </aside>
+</main>
+
+<footer>
+    <div><i class="fas fa-mouse-pointer"></i> E: 5.432.110,45 | N: 6.345.892,12</div>
+    <div>Z (Abril): 64.21m | Z (Agosto): 62.88m</div>
+    <div style="color: #ef4444; font-weight: bold;">DIFERENCIA Z: -1.33m</div>
+    <div style="margin-left: auto;">SISTEMA: <span style="color:white; font-weight: bold;">POSGAR 2007 / ARG 4</span></div>
+</footer>
+
+<script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
+<script>
+    // Inicialización del Mapa base coordinado
+    const map = new maplibregl.Map({
+        container: 'map',
+        style: {
+            version: 8,
+            sources: { 
+                'osm': { 
+                    type: 'raster', 
+                    tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'], 
+                    tileSize: 256 
+                } 
+            },
+            layers: [{ id: 'osm-layer', type: 'raster', source: 'osm' }]
+        },
+        center: [-60.712, -31.648],
+        zoom: 16
+    });
+
+    // Añadir controles básicos de navegación
+    map.addControl(new maplibregl.NavigationControl(), 'bottom-right');
+
+    // Nota técnica: Para una implementación real del Swipe, se utilizaría el plugin 
+    // maplibre-gl-compare para sincronizar dos mapas distintos en el mismo contenedor.
+</script>
+
 </body>
 </html>
