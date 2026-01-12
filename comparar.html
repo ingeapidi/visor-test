@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Comparación - Geoportal Cloud</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { height: 100vh; display: flex; flex-direction: column; background: #0f172a; color: white; }
+        .split-view { flex-grow: 1; display: flex; position: relative; }
+        .side-panel { width: 300px; background: #1e293b; padding: 25px; }
+        .map-container { flex-grow: 1; background: #000; display: flex; align-items: center; justify-content: center; position: relative; }
+        .slider-divider { width: 4px; background: white; height: 100%; position: absolute; left: 50%; cursor: col-resize; z-index: 10; }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="inicio.html" class="logo"><i class="fas fa-satellite-dish"></i> GEOPORTAL CLOUD</a>
+        <span>MODO COMPARACIÓN TEMPORAL</span>
+    </header>
+
+    <main class="split-view">
+        <div class="side-panel">
+            <label>RELEVAMIENTO A (IZQ)</label>
+            <select style="width:100%; padding:10px; margin-top:10px; background:#0f172a; color:white; border:1px solid #2563eb;">
+                <option>Enero 2024</option>
+            </select>
+            <p style="font-size:0.8rem; margin-top:20px; opacity:0.6;">Diferencia de volumen calculada: <b>+ 1,240 m³</b></p>
+        </div>
+
+        <div class="map-container">
+            <div class="slider-divider"></div>
+            <i class="fas fa-arrows-alt-h" style="font-size:2rem; z-index:11;"></i>
+            <span style="position:absolute; left:20%; top:20%; opacity:0.3;">VISTA ANTERIOR</span>
+            <span style="position:absolute; right:20%; top:20%; opacity:0.3;">VISTA ACTUAL</span>
+        </div>
+
+        <div class="side-panel">
+            <label>RELEVAMIENTO B (DER)</label>
+            <select style="width:100%; padding:10px; margin-top:10px; background:#0f172a; color:white; border:1px solid #f59e0b;">
+                <option>Marzo 2024</option>
+            </select>
+        </div>
+    </main>
+</body>
+</html>
