@@ -2,59 +2,188 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Visor WebGIS - Geoportal Cloud</title>
-    <link rel="stylesheet" href="css/styles.css">
+    
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css" rel="stylesheet">
+
     <style>
-        body { height: 100vh; display: flex; flex-direction: column; overflow: hidden; background: #0f172a; }
-        main { display: flex; flex-grow: 1; }
-        #map { flex-grow: 1; position: relative; }
-        .gis-sidebar { width: 260px; background: #1e293b; color: white; padding: 20px; overflow-y: auto; }
-        .layer-control { background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 0.85rem; }
-        footer { height: 30px; background: black; color: #94a3b8; display: flex; align-items: center; padding: 0 20px; font-size: 0.7rem; gap: 20px; }
+        :root {
+            --dark-ui: #0f172a;
+            --sidebar-bg: #1e293b;
+            --accent: #2563eb;
+            --text-light: #f8fafc;
+            --border: rgba(255,255,255,0.1);
+        }
+        
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; height: 100vh; background: var(--dark-ui); color: var(--text-light); overflow: hidden; }
+
+        /* --- 1. BARRA SUPERIOR (HEADER) --- */
+        header { height: 60px; background: var(--dark-ui); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 1px solid var(--border); z-index: 100; }
+        .logo { font-weight: 800; font-size: 1.2rem; color: #60a5fa; cursor: pointer; display: flex; align-items: center; gap: 10px; text-decoration: none; }
+        .project-title { font-weight: 600; font-size: 0.8rem; background: rgba(255,255,255,0.05); padding: 8px 20px; border-radius: 20px; border: 1px solid var(--border); text-transform: uppercase; letter-spacing: 0.5px; }
+        .user-access { display: flex; align-items: center; gap: 15px; cursor: pointer; }
+
+        /* --- CONTENEDOR PRINCIPAL --- */
+        main { display: flex; flex-grow: 1; overflow: hidden; position: relative; }
+
+        /* --- 2. PANEL IZQUIERDO: SELECTOR DE PROYECTOS --- */
+        #sidebar-left { width: 260px; background: var(--sidebar-bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+        .tree-title { padding: 15px; font-size: 0.75rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+        .tree-item { padding: 10px 20px; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; gap: 10px; transition: 0.2s; text-decoration: none; color: inherit; }
+        .tree-item:hover { background: rgba(255,255,255,0.05); }
+        .tree-sub-item { padding: 8px 20px 8px 45px; font-size: 0.8rem; opacity: 0.7; }
+        .tree-sub-item.active { background: var(--accent); opacity: 1; font-weight: bold; border-radius: 0 20px 20px 0; margin-right: 10px; }
+
+        /* --- 3. VISOR CENTRAL (MAPA) --- */
+        #map-container { flex-grow: 1; position: relative; }
+        #map { width: 100%; height: 100%; }
+
+        /* --- 4. PANEL DERECHO: CAPAS Y HERRAMIENTAS --- */
+        #sidebar-right { width: 300px; background: var(--sidebar-bg); border-left: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; }
+        .right-section { padding: 20px; border-bottom: 1px solid var(--border); }
+        .section-h { font-size: 0.8rem; font-weight: 800; color: #60a5fa; text-transform: uppercase; margin-bottom: 15px; display: flex; justify-content: space-between; }
+        
+        .layer-card { background: rgba(15, 23, 42, 0.5); border-radius: 8px; padding: 10px; margin-bottom: 8px; border: 1px solid var(--border); }
+        .layer-info { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+        
+        .tool-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .tool-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: white; padding: 12px 5px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; text-align: center; transition: 0.2s; }
+        .tool-btn:hover { background: var(--accent); border-color: white; }
+        .tool-btn i { font-size: 1.1rem; margin-bottom: 5px; display: block; }
+
+        .download-select { width: 100%; background: #0f172a; color: #60a5fa; border: 1px solid var(--accent); padding: 5px; border-radius: 4px; font-size: 0.7rem; margin-top: 5px; outline: none; }
+
+        /* --- 5. BARRA DE ESTADO (FOOTER) --- */
+        footer { height: 35px; background: var(--dark-ui); border-top: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; font-family: 'Courier New', monospace; font-size: 0.7rem; color: #94a3b8; gap: 30px; }
+        .status-highlight { color: #10b981; font-weight: bold; }
     </style>
 </head>
 <body>
-    <header>
-        <a href="inicio.html" class="logo"><i class="fas fa-satellite-dish"></i> GEOPORTAL CLOUD</a>
-        <a href="admin.html" class="btn" style="color:white; border:1px solid #475569;">Dashboard</a>
-    </header>
 
-    <main>
-        <aside class="gis-sidebar">
-            <h4 style="margin-top:0;">Capas del Proyecto</h4>
-            <div class="layer-control">
-                <input type="checkbox" checked> Ortomosaico RGB
-            </div>
-            <div class="layer-control">
-                <input type="checkbox"> MDT (Elevación)
-            </div>
-            <hr style="opacity:0.1; margin:20px 0;">
-            <h4>Herramientas</h4>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                <button class="btn btn-primary" title="Medir Distancia"><i class="fas fa-ruler"></i></button>
-                <button class="btn btn-primary" title="Perfil de Elevación"><i class="fas fa-chart-line"></i></button>
-            </div>
-        </aside>
+<header>
+    <a class="logo" onclick="location.href='inicio.html'">
+        <i class="fas fa-satellite-dish"></i> GEOPORTAL CLOUD
+    </a>
+    <div class="project-title">
+        PROYECTO: RELEVAMIENTO HIDRÁULICO - SECTOR DIQUE 4
+    </div>
+    <div class="user-access">
+        <div style="text-align: right;"><small>Ing. Juan Pérez</small></div>
+        <i class="fas fa-user-circle" style="font-size: 1.5rem;" onclick="location.href='perfil.html'"></i>
+        <i class="fas fa-cog" style="opacity: 0.5;" onclick="location.href='perfil.html'"></i>
+    </div>
+</header>
 
+<main>
+    <aside id="sidebar-left">
+        <div class="tree-title">Espacios de Trabajo</div>
+        <div class="tree-item"><i class="fas fa-folder" style="color:#f59e0b"></i> DIVISIÓN NORTE</div>
+        <a href="#" class="tree-item tree-sub-item"><i class="fas fa-map"></i> Exploración Veta A</a>
+        <a href="#" class="tree-item tree-sub-item active"><i class="fas fa-map"></i> Vuelo Lidar Dique 4</a>
+        
+        <div class="tree-item" style="margin-top:10px;"><i class="fas fa-folder" style="color:#f59e0b"></i> ÁREA INFRAESTRUCTURA</div>
+        <a href="#" class="tree-item tree-sub-item"><i class="fas fa-map"></i> Puente Río Salado</a>
+        
+        <button onclick="location.href='nuevo.html'" style="margin: 20px; background: transparent; border: 1px dashed #475569; color: #94a3b8; padding: 10px; border-radius: 8px; cursor: pointer;">
+            <i class="fas fa-plus"></i> Crear Nuevo
+        </button>
+    </aside>
+
+    <div id="map-container">
         <div id="map"></div>
-    </main>
+    </div>
 
-    <footer>
-        <span>COORDS: -31.643, -60.712</span>
-        <span>ELEVACIÓN Z: 64.2 m</span>
-        <span style="margin-left:auto;">SISTEMA: EPSG 5346 (POSGAR 07/4)</span>
-    </footer>
+    <aside id="sidebar-right">
+        <div class="right-section">
+            <div class="section-h">Capas del Proyecto <i class="fas fa-layer-group"></i></div>
+            
+            <div class="layer-card">
+                <div class="layer-info">
+                    <span><i class="fas fa-image" style="color:#3b82f6"></i> Orto_RGB_Dique4</span>
+                    <i class="fas fa-eye" style="color:#3b82f6; cursor: pointer;"></i>
+                </div>
+                <select class="download-select"><option>Descargar (.tif)</option><option>.jp2</option></select>
+            </div>
 
-    <script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
-    <script>
-        const map = new maplibregl.Map({
-            container: 'map',
-            style: 'https://demotiles.maplibre.org/style.json', // Mapa base temporal
-            center: [-60.712, -31.643],
-            zoom: 15
-        });
-    </script>
+            <div class="layer-card">
+                <div class="layer-info">
+                    <span><i class="fas fa-mountain" style="color:#f59e0b"></i> MDT_Elevacion</span>
+                    <i class="fas fa-eye-slash" style="cursor: pointer;"></i>
+                </div>
+                <select class="download-select"><option>Descargar (.tif)</option><option>.jp2</option></select>
+            </div>
+
+            <div class="layer-card">
+                <div class="layer-info">
+                    <span><i class="fas fa-braille" style="color:#10b981"></i> Nube_LAS_Fina</span>
+                    <i class="fas fa-eye-slash" style="cursor: pointer;"></i>
+                </div>
+                <select class="download-select"><option>Descargar (.las)</option><option>.laz</option></select>
+            </div>
+
+            <div class="layer-card">
+                <div class="layer-info">
+                    <span><i class="fas fa-vector-square" style="color:#ef4444"></i> Plano_Catastro</span>
+                    <i class="fas fa-eye" style="cursor: pointer;"></i>
+                </div>
+                <select class="download-select"><option>Descargar (.dxf)</option></select>
+            </div>
+        </div>
+
+        <div class="right-section">
+            <div class="section-h">Operaciones Geoespaciales <i class="fas fa-tools"></i></div>
+            <div class="tool-grid">
+                <div class="tool-btn"><i class="fas fa-ruler-combined"></i>Distancia</div>
+                <div class="tool-btn"><i class="fas fa-draw-polygon"></i>Superficie</div>
+                <div class="tool-btn"><i class="fas fa-cube"></i>Volumen</div>
+                <div class="tool-btn"><i class="fas fa-chart-area"></i>Perfil</div>
+            </div>
+        </div>
+    </aside>
+</main>
+
+<footer>
+    <div><span class="status-highlight">GEO:</span> Lat: -31.648291° | Lon: -60.712204°</div>
+    <div><span class="status-highlight">PLANO:</span> X: 5.432.891,22 | Y: 6.345.112,05</div>
+    <div><span class="status-highlight">ELEVACIÓN:</span> Z: 64.215 m</div>
+    <div style="margin-left: auto;">SISTEMA: <span style="color:white; font-weight:bold;">POSGAR 2007 / Argentina 4 (EPSG: 5346)</span></div>
+</footer>
+
+<script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
+<script>
+    // Inicialización del Mapa
+    const map = new maplibregl.Map({
+        container: 'map',
+        style: {
+            version: 8,
+            sources: {
+                'osm': {
+                    type: 'raster',
+                    tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+                    tileSize: 256,
+                    attribution: '© OpenStreetMap contributors'
+                }
+            },
+            layers: [{
+                id: 'osm-layer',
+                type: 'raster',
+                source: 'osm'
+            }]
+        },
+        center: [-60.712, -31.648],
+        zoom: 15
+    });
+
+    // Control de Navegación
+    map.addControl(new maplibregl.NavigationControl(), 'top-left');
+
+    // Efecto de actualización de coordenadas ficticio al mover el mouse
+    map.on('mousemove', (e) => {
+        // Aquí podrías actualizar el contenido del footer dinámicamente en el futuro
+    });
+</script>
+
 </body>
 </html>
