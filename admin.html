@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Administración - Geoportal Cloud</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        main { display: flex; height: calc(100vh - 60px); overflow: hidden; }
+        #sidebar { width: 280px; background: var(--sidebar-bg); color: #cbd5e1; display: flex; flex-direction: column; flex-shrink: 0; }
+        #content { flex-grow: 1; overflow-y: auto; padding: 30px; }
+        .project-tree { padding: 20px 0; }
+        .tree-item { padding: 10px 20px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: 0.2s; font-size: 0.9rem; text-decoration: none; color: inherit;}
+        .tree-item:hover { background: rgba(255,255,255,0.05); color: white; }
+        .active-project { background: rgba(37, 99, 235, 0.15); color: #60a5fa; border-right: 3px solid var(--accent); }
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="inicio.html" class="logo"><i class="fas fa-satellite-dish"></i> GEOPORTAL CLOUD</a>
+        <div style="display:flex; gap:20px; align-items:center;">
+            <span>Ing. Juan Pérez</span>
+            <a href="perfil.html" style="color:white;"><i class="fas fa-cog"></i></a>
+        </div>
+    </header>
+
+    <main>
+        <aside id="sidebar">
+            <div style="padding: 20px;">
+                <a href="nuevo.html" class="btn btn-primary" style="width:100%; justify-content:center;"><i class="fas fa-plus"></i> CREAR NUEVO</a>
+            </div>
+            <div class="project-tree">
+                <div style="padding: 0 20px 10px; font-size: 0.7rem; font-weight: 800; color: #64748b; text-transform: uppercase;">Espacios de Trabajo</div>
+                <div class="tree-item"><i class="fas fa-folder-open" style="color: #f59e0b;"></i> DIVISIÓN NORTE</div>
+                <a href="#" class="tree-item active-project"><i class="fas fa-map"></i> Vuelo Lidar Dique 4</a>
+                <div class="tree-item"><i class="fas fa-folder" style="color: #94a3b8;"></i> INFRAESTRUCTURA</div>
+            </div>
+        </aside>
+
+        <div id="content">
+            <div class="stats-grid">
+                <div class="card"><small>ALMACENAMIENTO</small><h3>2.84 TB</h3></div>
+                <div class="card"><small>PROYECTOS</small><h3>14</h3></div>
+                <div class="card"><small>INGESTAS</small><h3>42</h3></div>
+                <div class="card" style="border-right: 4px solid #ef4444;"><small>ALERTAS</small><h3 style="color:#ef4444">3</h3></div>
+            </div>
+
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h2>Vuelo Lidar Dique 4</h2>
+                    <a href="visor.html" class="btn btn-primary">IR AL VISOR</a>
+                </div>
+                <p style="color:var(--text-slate)">Estado de archivos y capas disponibles en este relevamiento:</p>
+                <table style="width:100%; border-collapse:collapse; margin-top:20px;">
+                    <tr style="text-align:left; border-bottom:1px solid #e2e8f0; color:var(--text-slate); font-size:0.8rem;">
+                        <th style="padding:10px;">CAPA</th><th style="padding:10px;">TIPO</th><th style="padding:10px;">TAMAÑO</th><th style="padding:10px;">ESTADO</th>
+                    </tr>
+                    <tr style="font-size:0.9rem; border-bottom:1px solid #f1f5f9;">
+                        <td style="padding:15px;"><strong>MDT_Superficie.tif</strong></td><td>MDT</td><td>8.4 GB</td><td style="color:#10b981">LISTO</td>
+                    </tr>
+                    <tr style="font-size:0.9rem;">
+                        <td style="padding:15px;"><strong>Nube_Lidar.las</strong></td><td>LAS</td><td>24.1 GB</td><td style="color:#10b981">LISTO</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
