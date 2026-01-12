@@ -6,67 +6,74 @@
     <link rel="stylesheet" href="css/styles.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
-<body style="display: flex; align-items: center; justify-content: center; height: 100vh;">
+<body style="display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #f1f5f9;">
 
-    <div class="card" style="width: 100%; max-width: 450px; text-align: center;">
-        <div class="logo" style="justify-content: center; margin-bottom: 20px;">
-            <i class="fas fa-satellite-dish"></i> GEOPORTAL CLOUD
-        </div>
-        <h2 style="margin-bottom: 10px;">Crear Nueva Cuenta</h2>
-        <p style="color: var(--text-slate); font-size: 0.85rem; margin-bottom: 25px;">Únase a la plataforma de gestión geoespacial</p>
-        
-        <input type="text" id="regNombre" placeholder="Nombre completo" required>
-        <input type="text" id="regEmpresa" placeholder="Empresa / Organización" required>
-        <input type="email" id="regEmail" placeholder="Correo electrónico" required>
-        <input type="password" id="regPass" placeholder="Contraseña" required>
-        
-        <button id="regBtn" class="btn btn-primary" style="width:100%; justify-content: center; margin-top: 10px;">
-            REGISTRARME
+    <div class="card" style="width: 100%; max-width: 450px;">
+        <h2 style="text-align: center;">Crear Nueva Cuenta</h2>
+        <p style="text-align: center; color: var(--text-slate); margin-bottom: 30px;">Únete a la red de gestión geoespacial</p>
+
+        <label>Nombre Completo</label>
+        <input type="text" id="regNombre" placeholder="Ej: Juan Pérez">
+
+        <label>Empresa / Organización</label>
+        <input type="text" id="regEmpresa" placeholder="Ej: GeoSistemas S.A.">
+
+        <label>Correo Electrónico</label>
+        <input type="email" id="regEmail" placeholder="correo@ejemplo.com">
+
+        <label>Contraseña</label>
+        <input type="password" id="regPass" placeholder="Mínimo 6 caracteres">
+
+        <button id="btnRegistro" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 10px;">
+            REGISTRARME E INGRESAR
         </button>
 
-        <p style="margin-top: 20px; font-size: 0.85rem;">
-            ¿Ya tienes cuenta? <a href="index.html" style="color: var(--accent); font-weight: bold; text-decoration: none;">Inicia sesión aquí</a>
+        <p style="margin-top: 25px; text-align: center; font-size: 0.85rem;">
+            ¿Ya tienes cuenta? <a href="index.html" style="color: var(--accent); font-weight: bold;">Inicia sesión</a>
         </p>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/api.js"></script>
 
     <script>
-        async function registrar() {
+        document.getElementById('btnRegistro').onclick = async () => {
             const nombre = document.getElementById('regNombre').value;
             const empresa = document.getElementById('regEmpresa').value;
             const email = document.getElementById('regEmail').value;
             const pass = document.getElementById('regPass').value;
-            const btn = document.getElementById('regBtn');
+            const btn = document.getElementById('btnRegistro');
 
-            // Validación simple
-            if (!nombre || !empresa || !email || !pass) {
-                alert("Por favor, completa todos los campos para el registro");
-                return;
-            }
+            if(!nombre || !email || !pass) return alert("Completa los campos obligatorios.");
 
-            btn.innerText = "PROCESANDO...";
+            btn.innerText = "CREANDO CUENTA...";
             btn.disabled = true;
 
-            // LLAMADA A LA API CENTRALIZADA
-            const result = await callApi('registrar', { 
-                nombre: nombre, 
-                empresa: empresa, 
-                email: email, 
-                password: pass 
-            });
+            try {
+                // 1. Registro en Supabase Auth
+                const { user } = await registrarUsuario(email, pass, nombre, empresa);
 
-            if (result.success) {
-                alert("¡Cuenta creada con éxito! Por favor, inicia sesión.");
+                // 2. Insertar en nuestra tabla de perfiles (opcional pero recomendado)
+                const { error: errorPerfil } = await supabase
+                    .from('perfiles')
+                    .insert([{ 
+                        id: user.id, 
+                        nombre: nombre, 
+                        email: email, 
+                        empresa: empresa 
+                    }]);
+                
+                if(errorPerfil) throw errorPerfil;
+
+                alert("¡Cuenta creada con éxito! Ahora puedes ingresar.");
                 window.location.href = "index.html";
-            } else {
-                alert("Error en el registro: " + result.message);
-                btn.innerText = "REGISTRARME";
+
+            } catch (error) {
+                alert("Error al registrar: " + error.message);
+                btn.innerText = "REGISTRARME E INGRESAR";
                 btn.disabled = false;
             }
-        }
-
-        document.getElementById('regBtn').addEventListener('click', registrar);
+        };
     </script>
 </body>
 </html>
