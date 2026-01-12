@@ -5,18 +5,18 @@
     <title>Nuevo Proyecto - Geoportal Cloud</title>
     <link rel="stylesheet" href="css/styles.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-<style>
-    /* Sobrescribimos el bloqueo del body solo para esta página */
-    body {
-        overflow-y: auto !important; 
-        height: auto !important;
-    }
-    
-    /* Aseguramos que el contenedor tenga espacio al final para que no quede pegado */
-    .form-container {
-        padding-bottom: 100px;
-    }
-</style>
+    <style>
+        /* Sobrescribimos el bloqueo del body solo para esta página */
+        body {
+            overflow-y: auto !important; 
+            height: auto !important;
+        }
+        
+        /* Aseguramos que el contenedor tenga espacio al final para que no quede pegado */
+        .form-container {
+            padding-bottom: 100px;
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -78,10 +78,9 @@
 
                 if (result.success) {
                     const select = document.getElementById('selectEspacio');
-                    // Insertamos los espacios antes de la última opción (Crear Nuevo)
                     result.data.espacios.forEach(esp => {
                         const opt = document.createElement('option');
-                        opt.value = esp[0]; // ID del espacio
+                        opt.value = esp[0]; // ID del espacio (Ej: ESP-123)
                         opt.innerText = esp[2]; // Nombre del espacio
                         select.add(opt, select.options[1]);
                     });
@@ -100,12 +99,12 @@
             const btn = document.getElementById('btnCrear');
             const select = document.getElementById('selectEspacio');
             
-            let idEspacio = select.value;
+            let idEspacioFinal = select.value;
             const proyNombre = document.getElementById('proyNombre').value;
             const proyCliente = document.getElementById('proyCliente').value;
             const proyUbicacion = document.getElementById('proyUbicacion').value;
 
-            if (!idEspacio || !proyNombre) {
+            if (!idEspacioFinal || !proyNombre) {
                 alert("Por favor selecciona un espacio y asigna un nombre al proyecto.");
                 return;
             }
@@ -113,48 +112,59 @@
             btn.innerText = "PROCESANDO...";
             btn.disabled = true;
 
-            // PASO A: Si el espacio es nuevo, lo creamos primero
-            if (idEspacio === "NUEVO") {
-                const nombreE = document.getElementById('nombreNuevoEspacio').value;
-                if(!nombreE) { alert("Nombre del espacio requerido"); btn.disabled = false; return; }
-                
-                const resE = await callApi('crear_espacio', {
-                    id_usuario: usuario.id,
-                    nombre: nombreE,
-                    descripcion: "Creado desde panel de proyectos",
-                    email: usuario.email
+            try {
+                // PASO A: Si el espacio es nuevo, lo creamos primero y obtenemos su ID
+                if (idEspacioFinal === "NUEVO") {
+                    const nombreE = document.getElementById('nombreNuevoEspacio').value;
+                    if(!nombreE) { 
+                        alert("Nombre del espacio requerido"); 
+                        btn.disabled = false; 
+                        btn.innerText = "CREAR PROYECTO Y FINALIZAR";
+                        return; 
+                    }
+                    
+                    const resE = await callApi('crear_espacio', {
+                        id_usuario: usuario.id,
+                        nombre: nombreE,
+                        descripcion: "Creado desde panel de proyectos",
+                        email: usuario.email
+                    });
+                    
+                    if (resE.success) {
+                        // CAPTURAMOS EL ID REAL QUE GENERÓ GOOGLE (Ej: ESP-456)
+                        idEspacioFinal = resE.data.id_creado;
+                    } else {
+                        throw new Error("No se pudo crear el espacio: " + resE.message);
+                    }
+                }
+
+                // PASO B: Crear el proyecto vinculado al ID del espacio (el existente o el nuevo)
+                const resP = await callApi('crear_proyecto', {
+                    id_espacio: idEspacioFinal,
+                    nombre: proyNombre,
+                    cliente: proyCliente,
+                    contratista: usuario.empresa,
+                    ubicacion: proyUbicacion
                 });
-                
-                // Nota: En un sistema real, el servidor debería devolvernos el nuevo ID.
-                // Para este prototipo, pediremos al usuario que recargue o usaremos una lógica de re-intento.
-                // Por ahora, asumiremos que se creó y pediremos que use un espacio existente 
-                // para asegurar que el ID sea correcto en esta fase.
-                alert("Espacio creado. Por seguridad en esta fase, por favor selecciónalo de la lista.");
-                location.reload();
-                return;
-            }
 
-            // PASO B: Crear el proyecto vinculado al ID del espacio
-            const resP = await callApi('crear_proyecto', {
-                id_espacio: idEspacio,
-                nombre: proyNombre,
-                cliente: proyCliente,
-                contratista: usuario.empresa,
-                ubicacion: proyUbicacion
-            });
+                if (resP.success) {
+                    alert("¡Éxito! Espacio y Proyecto configurados correctamente.");
+                    window.location.href = 'admin.html';
+                } else {
+                    alert("Error al crear proyecto: " + resP.message);
+                }
 
-            if (resP.success) {
-                alert("¡Proyecto creado con éxito en Google Sheets!");
-                window.location.href = 'admin.html';
-            } else {
-                alert("Error: " + resP.message);
+            } catch (error) {
+                console.error("Error en el proceso:", error);
+                alert(error.message);
+            } finally {
                 btn.disabled = false;
                 btn.innerText = "CREAR PROYECTO Y FINALIZAR";
             }
         }
 
         window.onload = () => {
-            inicializarInterfaz();
+            if (typeof inicializarInterfaz === 'function') inicializarInterfaz();
             cargarEspacios();
             document.getElementById('btnCrear').onclick = ejecutarCreacion;
         };
