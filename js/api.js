@@ -1,59 +1,44 @@
-// CONFIGURACIÓN CENTRAL
+// js/api.js
 const API_URL = "https://script.google.com/macros/s/AKfycbz7SoDrtjnHMr_LLIHu0xqosDWcEk3Y9CceA02HuMSee4_j6B21Pjb051wV0MmuG9voTQ/exec";
 
-/**
- * Función maestra para hablar con Google Sheets
- * @param {string} action - La acción a realizar (login, registrar, etc)
- * @param {object} payload - Los datos que enviamos
- */
 async function callApi(action, payload) {
     try {
         const response = await fetch(API_URL, {
             method: 'POST',
-            body: JSON.stringify({
-                action: action,
-                payload: payload
-            })
+            body: JSON.stringify({ action: action, payload: payload })
         });
         return await response.json();
     } catch (error) {
-        console.error("Error en la comunicación con la API:", error);
-        return { success: false, message: "Error de conexión con el servidor" };
+        console.error("Error API:", error);
+        return { success: false, message: "Error de conexión" };
     }
 }
 
-/**
- * Función para verificar si hay un usuario logueado (Seguridad)
- */
 function verificarSesion() {
-    const usuario = localStorage.getItem('usuario');
-    if (!usuario && !window.location.href.includes('index.html') && !window.location.href.includes('registro.html')) {
+    const usuarioJson = localStorage.getItem('usuario');
+    if (!usuarioJson && !window.location.href.includes('index.html') && !window.location.href.includes('registro.html')) {
         window.location.href = 'index.html';
+        return null;
     }
-    return JSON.parse(usuario);
+    return JSON.parse(usuarioJson);
 }
 
-/**
- * Esta función busca los elementos del Header en cualquier página
- * y pone el nombre del usuario logueado automáticamente.
- */
 function inicializarInterfaz() {
     const usuario = verificarSesion();
-    if (usuario) {
-        // Buscamos cualquier elemento que deba mostrar el nombre
-        const nombreDisplay = document.querySelector('.user-access small, .user-info span');
-        if (nombreDisplay) {
-            nombreDisplay.innerText = usuario.nombre;
-        }
-        
-        const avatarDisplay = document.querySelector('.avatar-large');
-        if (avatarDisplay) {
-            // Ponemos las iniciales (Ej: Juan Pérez -> JP)
-            const iniciales = usuario.nombre.split(' ').map(n => n[0]).join('');
-            avatarDisplay.innerText = iniciales;
-        }
+    if (!usuario) return;
+
+    // Actualizar nombre en Header (si existe)
+    const nombreDisplay = document.querySelector('.user-access small, .user-info span');
+    if (nombreDisplay) nombreDisplay.innerText = usuario.nombre;
+
+    // Actualizar Avatar (si existe)
+    const avatarDisplay = document.querySelector('.avatar-large');
+    if (avatarDisplay && usuario.nombre) {
+        const iniciales = usuario.nombre.split(' ').map(n => n[0]).join('').toUpperCase();
+        avatarDisplay.innerText = iniciales;
     }
+    console.log("Interfaz inicializada para:", usuario.nombre);
 }
 
-// Se ejecuta automáticamente al cargar cualquier página
-window.onload = inicializarInterfaz;
+// Usamos DOMContentLoaded en lugar de window.onload para evitar conflictos
+document.addEventListener('DOMContentLoaded', inicializarInterfaz);
