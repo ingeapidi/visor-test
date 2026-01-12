@@ -62,29 +62,36 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/api.js"></script>
+
     <script>
-        // Carga los espacios filtrados por el usuario logueado
+        // 1. Cargar espacios desde la tabla 'espacios' de Supabase
         async function cargarEspacios() {
             const usuario = verificarSesion();
             if(!usuario) return;
 
             try {
-                const res = await fetch(`${API_URL}?action=obtener_datos_admin&id_usuario=${usuario.id}`);
-                const result = await res.json();
+                const { data, error } = await supabase
+                    .from('espacios')
+                    .select('id, nombre')
+                    .order('nombre', { ascending: true });
 
-                if (result.success) {
-                    const select = document.getElementById('selectEspacio');
-                    while (select.options.length > 2) { select.remove(2); }
-                    
-                    result.data.espacios.forEach(esp => {
-                        const opt = document.createElement('option');
-                        opt.value = esp[0]; // ID del espacio
-                        opt.innerText = esp[2]; // Nombre del espacio
-                        select.add(opt, select.options[1]);
-                    });
-                }
-            } catch (e) { console.error("Error cargando espacios", e); }
+                if (error) throw error;
+
+                const select = document.getElementById('selectEspacio');
+                // Limpiar opciones manteniendo las dos primeras
+                while (select.options.length > 2) { select.remove(2); }
+                
+                data.forEach(esp => {
+                    const opt = document.createElement('option');
+                    opt.value = esp.id; 
+                    opt.innerText = esp.nombre; 
+                    select.add(opt, select.options[1]);
+                });
+            } catch (e) { 
+                console.error("Error cargando espacios", e); 
+            }
         }
 
         function verificarNuevoEspacio() {
@@ -101,9 +108,8 @@
             let idEspacioFinal = select.value;
             const proyNombre = document.getElementById('proyNombre').value;
 
-            // Validación de campos obligatorios antes de disparar la API
             if (!idEspacioFinal || !proyNombre) {
-                alert("Condición Restrictiva: Debe seleccionar un Espacio y asignar un Nombre al Proyecto.");
+                alert("Debe seleccionar un Espacio y asignar un Nombre al Proyecto.");
                 return;
             }
 
@@ -111,45 +117,53 @@
             btn.disabled = true;
 
             try {
-                // PASO 1: Creación simultánea de Espacio si es requerido
+                // PASO 1: Crear Espacio en Supabase si es requerido
                 if (idEspacioFinal === "NUEVO") {
                     const nombreE = document.getElementById('nombreNuevoEspacio').value;
-                    if(!nombreE) throw new Error("Debe asignar un nombre al nuevo espacio de trabajo.");
+                    if(!nombreE) throw new Error("Debe asignar un nombre al nuevo espacio.");
                     
-                    const resE = await callApi('crear_espacio', {
-                        id_usuario: usuario.id,
-                        nombre: nombreE,
-                        descripcion: "Espacio automático",
-                        email: usuario.email
-                    });
-                    
-                    if (resE && resE.success) {
-                        idEspacioFinal = resE.data.id_creado; // Vinculamos el ID recién nacido
-                    } else {
-                        // Aquí capturamos errores como "Nombre ya existe" del servidor
-                        throw new Error(resE.message || "Error al crear espacio.");
+                    const { data: nuevoEspacio, error: errorE } = await supabase
+                        .from('espacios')
+                        .insert([{ 
+                            nombre: nombreE, 
+                            propietario_id: usuario.id,
+                            descripcion: "Espacio creado desde formulario"
+                        }])
+                        .select()
+                        .single();
+
+                    if (errorE) {
+                        if (errorE.code === '23505') throw new Error("Ya tienes un espacio con ese nombre.");
+                        throw errorE;
                     }
+                    
+                    idEspacioFinal = nuevoEspacio.id;
                 }
 
-                // PASO 2: Creación del Proyecto (Garantiza vínculo obligatorio)
-                const resP = await callApi('crear_proyecto', {
-                    id_espacio: idEspacioFinal,
-                    nombre: proyNombre,
-                    cliente: document.getElementById('proyCliente').value,
-                    contratista: usuario.empresa,
-                    ubicacion: document.getElementById('proyUbicacion').value
-                });
+                // PASO 2: Crear el Proyecto vinculado en Supabase
+                const { data: nuevoProy, error: errorP } = await supabase
+                    .from('proyectos')
+                    .insert([{
+                        espacio_id: idEspacioFinal,
+                        nombre: proyNombre,
+                        cliente: document.getElementById('proyCliente').value,
+                        contratista: usuario.empresa,
+                        ubicacion: document.getElementById('proyUbicacion').value
+                    }])
+                    .select()
+                    .single();
 
-                if (resP && resP.success) {
-                    alert("¡Éxito! El proyecto ha sido vinculado correctamente al espacio.");
-                    window.location.href = 'admin.html';
-                } else {
-                    throw new Error(resP.message || "Error al crear el proyecto.");
+                if (errorP) {
+                    if (errorP.code === '23505') throw new Error("Ya existe un proyecto con ese nombre en este espacio.");
+                    throw errorP;
                 }
+
+                alert("¡Proyecto creado con éxito!");
+                window.location.href = 'admin.html';
 
             } catch (error) {
-                alert("Aviso: " + error.message);
-                // Si el espacio se creó pero falló el proyecto, refrescamos la lista
+                alert("Error: " + error.message);
+                console.error(error);
                 await cargarEspacios(); 
             } finally {
                 btn.disabled = false;
@@ -158,7 +172,6 @@
         }
 
         window.onload = () => {
-            if (typeof inicializarInterfaz === 'function') inicializarInterfaz();
             cargarEspacios();
             document.getElementById('btnCrear').onclick = ejecutarCreacion;
         };
