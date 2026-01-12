@@ -61,32 +61,38 @@
         </main>
     </div>
 
-    <script src="js/api.js"></script>
+   <script src="js/api.js"></script>
 
     <script>
-        // 1. Al cargar la página, llenamos los campos con los datos de la sesión
+        // Función principal de carga de datos
         function cargarDatosPerfil() {
-            const usuario = verificarSesion(); // Función que ya tenemos en api.js
+            const usuario = verificarSesion();
+            console.log("Cargando datos en perfil para:", usuario);
             
             if (usuario) {
-                document.getElementById('inputNombre').value = usuario.nombre;
+                // Llenar inputs
+                document.getElementById('inputNombre').value = usuario.nombre || "";
                 document.getElementById('inputEmpresa').value = usuario.empresa || "";
-                document.getElementById('inputEmail').value = usuario.email;
+                document.getElementById('inputEmail').value = usuario.email || "";
+                
+                // Llenar textos visuales
                 document.getElementById('displayNombre').innerText = usuario.nombre;
-                document.getElementById('displayRol').innerText = usuario.rol;
+                document.getElementById('displayRol').innerText = usuario.rol || "Usuario";
+                
+                // Generar iniciales para el avatar de la página
+                const iniciales = usuario.nombre.split(' ').map(n => n[0]).join('').toUpperCase();
+                document.getElementById('profileAvatar').innerText = iniciales;
             }
         }
 
-        // 2. Función para enviar cambios a Google Sheets
         async function guardarCambios() {
             const usuario = verificarSesion();
             const btn = document.getElementById('btnGuardar');
-            
             const nuevoNombre = document.getElementById('inputNombre').value;
             const nuevaEmpresa = document.getElementById('inputEmpresa').value;
 
             if (!nuevoNombre || !nuevaEmpresa) {
-                alert("Por favor completa los campos de nombre y empresa.");
+                alert("Por favor completa los campos.");
                 return;
             }
 
@@ -100,34 +106,28 @@
             });
 
             if (result.success) {
-                // Actualizamos los datos en la memoria local (localStorage)
                 usuario.nombre = nuevoNombre;
                 usuario.empresa = nuevaEmpresa;
                 localStorage.setItem('usuario', JSON.stringify(usuario));
-                
-                alert("¡Perfil actualizado correctamente!");
-                location.reload(); // Recargamos para refrescar el header y textos
+                alert("¡Perfil actualizado!");
+                location.reload();
             } else {
-                alert("Error al actualizar: " + result.message);
+                alert("Error: " + result.message);
                 btn.innerText = "GUARDAR CAMBIOS";
                 btn.disabled = false;
             }
         }
 
-        // 3. Función para cerrar sesión correctamente
         function cerrarSesion() {
             localStorage.removeItem('usuario');
             window.location.href = 'index.html';
         }
 
-        // Inicializar
-        window.onload = () => {
-            // Ejecutamos la función de la interfaz que está en api.js (para el header)
-            if (typeof inicializarInterfaz === 'function') inicializarInterfaz();
+        // Usamos el evento 'load' específicamente para esta página
+        window.addEventListener('load', () => {
             cargarDatosPerfil();
-        };
-
-        document.getElementById('btnGuardar').onclick = guardarCambios;
+            document.getElementById('btnGuardar').onclick = guardarCambios;
+        });
     </script>
 </body>
 </html>
