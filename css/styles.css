@@ -78,13 +78,7 @@ main { display: flex; flex-grow: 1; overflow: hidden; position: relative; }
     border-right: 1px solid var(--border-dark); 
 }
 
-.sidebar-right { 
-    width: 300px; 
-    border-left: 1px solid var(--border); 
-    border-right: none;
-}
-
-.tree-title, .section-h { 
+.tree-title { 
     padding: 15px; 
     font-size: 0.75rem; 
     font-weight: 800; 
@@ -94,25 +88,30 @@ main { display: flex; flex-grow: 1; overflow: hidden; position: relative; }
 }
 
 .tree-item { 
-    padding: 10px 20px; 
+    padding: 12px 20px; 
     cursor: pointer; 
     font-size: 0.85rem; 
     display: flex; 
     align-items: center; 
     gap: 10px; 
-    transition: 0.2s; 
+    transition: all 0.2s ease; 
+    border-left: 4px solid transparent; /* Para el indicador lateral */
 }
 
-.tree-item:hover { background: rgba(255,255,255,0.05); }
+.tree-item:hover { 
+    background: rgba(255,255,255,0.05); 
+    color: white;
+}
+
+/* Estado Activo para el Filtro de Espacios */
+.tree-item.active { 
+    background: rgba(37, 99, 235, 0.15); 
+    color: #60a5fa; 
+    border-left: 4px solid var(--accent);
+    font-weight: bold; 
+}
 
 .tree-sub-item { padding-left: 45px; font-size: 0.8rem; opacity: 0.7; }
-
-.tree-item.active {
-    background-color: rgba(37, 99, 235, 0.1); /* Azul suave */
-    color: var(--accent); /* Tu color azul principal */
-    border-right: 3px solid var(--accent);
-    font-weight: bold;
-}
 
 /* --- COMPONENTES UI (CARDS, BOTONES) --- */
 .card { 
@@ -140,54 +139,15 @@ main { display: flex; flex-grow: 1; overflow: hidden; position: relative; }
 .btn-primary:hover { background: #1d4ed8; transform: translateY(-1px); }
 
 .btn-outline { background: transparent; border: 1px solid #cbd5e1; color: var(--text-slate); }
+.btn-outline:hover { background: #f8fafc; border-color: var(--accent); color: var(--accent); }
 
 /* --- TABLAS Y GRIDS --- */
 .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 40px; }
 
 table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9rem; }
-th { text-align: left; padding: 12px; border-bottom: 2px solid #f1f5f9; color: var(--text-slate); }
-td { padding: 12px; border-bottom: 1px solid #f1f5f9; color: #334155; }
-
-/* --- VISOR Y COMPARADOR --- */
-#map { width: 100%; height: 100%; background: #000; }
-
-.layer-card { 
-    background: rgba(15, 23, 42, 0.5); 
-    border-radius: 8px; 
-    padding: 10px; 
-    margin-bottom: 8px; 
-    border: 1px solid var(--border); 
-}
-
-.tool-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-
-.swipe-handle { 
-    position: absolute; top: 0; bottom: 0; left: 50%; width: 4px; 
-    background: white; z-index: 5; cursor: col-resize; 
-}
-
-.swipe-handle::after { 
-    content: '↔'; position: absolute; top: 50%; left: 50%; 
-    transform: translate(-50%, -50%); width: 40px; height: 40px; 
-    background: white; color: var(--accent); border-radius: 50%; 
-    display: flex; align-items: center; justify-content: center; 
-    font-weight: bold; font-size: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); 
-}
-
-/* --- FOOTER --- */
-footer { 
-    height: 35px; 
-    background: var(--ui-dark); 
-    border-top: 1px solid var(--border); 
-    display: flex; 
-    align-items: center; 
-    padding: 0 20px; 
-    font-family: monospace; 
-    font-size: 0.75rem; 
-    color: #94a3b8; 
-    gap: 30px; 
-}
-.status-highlight { color: var(--success); font-weight: bold; }
+th { text-align: left; padding: 12px; border-bottom: 2px solid #f1f5f9; color: var(--text-slate); font-weight: 800; text-transform: uppercase; font-size: 0.7rem; }
+td { padding: 15px 12px; border-bottom: 1px solid #f1f5f9; color: #334155; }
+tr:hover td { background-color: #f8fafc; }
 
 /* --- COMPONENTES DE FORMULARIO --- */
 .form-container { max-width: 800px; margin: 40px auto; padding: 0 20px; }
@@ -211,9 +171,9 @@ input, select, textarea {
     box-sizing: border-box;
 }
 
-input:disabled { background: #f8fafc; color: #94a3b8; cursor: not-allowed; }
+input:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
 
-/* --- ZONA DE CARGA (DRAG & DROP) --- */
+/* --- ZONA DE CARGA --- */
 .upload-zone { 
     border: 2px dashed var(--accent); 
     background: #eff6ff; 
@@ -224,34 +184,8 @@ input:disabled { background: #f8fafc; color: #94a3b8; cursor: not-allowed; }
     cursor: pointer; 
     transition: 0.3s;
 }
-.upload-zone:hover { background: #dbeafe; }
 
 /* --- PERFIL Y CONFIGURACIÓN --- */
-.profile-grid { 
-    display: grid; 
-    grid-template-columns: 280px 1fr; 
-    gap: 30px; 
-    max-width: 1100px; 
-    margin: 40px auto; 
-    padding: 0 20px; 
-}
-
-.settings-nav { background: white; border-radius: 12px; border: 1px solid #e2e8f0; padding: 15px; }
-
-.nav-item { 
-    padding: 12px 15px; 
-    border-radius: 8px; 
-    cursor: pointer; 
-    display: flex; 
-    align-items: center; 
-    gap: 10px; 
-    font-weight: 600; 
-    color: var(--text-slate); 
-    transition: 0.2s; 
-    margin-bottom: 5px; 
-}
-.nav-item:hover, .nav-item.active { background: #eff6ff; color: var(--accent); }
-
 .avatar-large { 
     width: 80px; height: 80px; 
     background: var(--accent); 
@@ -261,9 +195,14 @@ input:disabled { background: #f8fafc; color: #94a3b8; cursor: not-allowed; }
     justify-content: center; 
     color: white; 
     font-size: 2rem; 
+    font-weight: bold;
 }
 
-/* --- TARJETA DE ALMACENAMIENTO --- */
-.storage-card { background: var(--ui-dark); color: white; padding: 25px; border-radius: 12px; margin-top: 20px; }
-.progress-bar { height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; margin: 15px 0; overflow: hidden; }
-.progress-fill { height: 100%; background: var(--success); width: 65%; }
+.status-highlight { 
+    background: rgba(16, 185, 129, 0.1); 
+    color: var(--success); 
+    padding: 4px 10px; 
+    border-radius: 20px; 
+    font-size: 0.75rem; 
+    font-weight: bold; 
+}
