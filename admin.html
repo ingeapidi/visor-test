@@ -5,13 +5,30 @@
     <title>Administración - Geoportal Cloud</title>
     <link rel="stylesheet" href="css/styles.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Estilo para resaltar el espacio seleccionado */
+        .tree-item {
+            cursor: pointer;
+            transition: all 0.2s;
+            border-right: 3px solid transparent;
+        }
+        .tree-item:hover {
+            background-color: rgba(0,0,0,0.05);
+        }
+        .tree-item.active {
+            background-color: rgba(37, 99, 235, 0.1);
+            color: #2563eb;
+            border-right: 3px solid #2563eb;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
 <header>
     <div class="logo" onclick="location.href='inicio.html'"><i class="fas fa-satellite-dish"></i> GEOPORTAL CLOUD</div>
     <div class="header-title">PANEL DE CONTROL GENERAL</div>
     <div class="user-access" onclick="location.href='perfil.html'">
-        <div style="text-align: right;"><small>Cargando...</small><br><b style="font-size: 0.7em; opacity: 0.6;">ADMINISTRADOR</b></div>
+        <div style="text-align: right;"><small id="headerUserName">Cargando...</small><br><b style="font-size: 0.7em; opacity: 0.6;">ADMINISTRADOR</b></div>
         <i class="fas fa-user-circle" style="font-size: 1.5rem;"></i>
     </div>
 </header>
@@ -30,17 +47,17 @@
 
     <div class="container-scroll">
         <div class="stats-grid">
-            <div class="card"><small>ALMACENAMIENTO</small><div id="stat-storage" style="font-size: 1.6rem; font-weight: 800; margin: 8px 0;">-- TB</div></div>
-            <div class="card"><small>PROYECTOS ACTIVOS</small><div id="stat-projects" style="font-size: 1.6rem; font-weight: 800; margin: 8px 0;">0</div></div>
-            <div class="card"><small>INGESTAS MES</small><div style="font-size: 1.6rem; font-weight: 800; margin: 8px 0;">0</div></div>
+            <div class="card"><small>ALMACENAMIENTO</small><div id="stat-storage" style="font-size: 1.6rem; font-weight: 800; margin: 8px 0;">1.2 TB</div></div>
+            <div class="card"><small>PROYECTOS MOSTRADOS</small><div id="stat-projects" style="font-size: 1.6rem; font-weight: 800; margin: 8px 0;">0</div></div>
+            <div class="card"><small>INGESTAS MES</small><div style="font-size: 1.6rem; font-weight: 800; margin: 8px 0;">12</div></div>
             <div class="card" style="border-right: 4px solid var(--error);"><small>ALERTAS</small><div style="font-size: 1.6rem; font-weight: 800; margin: 8px 0; color: var(--error);">0</div></div>
         </div>
 
         <div class="card">
             <div style="display: flex; justify-content: space-between; margin-bottom: 25px;">
                 <div>
-                    <h2 style="margin:0;">Proyectos Recientes</h2>
-                    <p style="color:var(--text-slate)">Listado general de relevamientos cargados</p>
+                    <h2 id="titulo-seccion" style="margin:0;">Todos los Proyectos</h2>
+                    <p id="subtitulo-seccion" style="color:var(--text-slate)">Listado general de relevamientos cargados</p>
                 </div>
             </div>
             <table>
@@ -64,46 +81,80 @@
 <script src="js/api.js"></script>
 
 <script>
+    // Variable global para filtrar sin volver a llamar a la API
+    let proyectosGlobales = [];
+
     async function cargarDashboard() {
         const usuario = verificarSesion();
         if (!usuario) return;
 
         try {
-            // Llamamos al doGet de Google Apps Script
             const response = await fetch(`${API_URL}?action=obtener_datos_admin&id_usuario=${usuario.id}`);
             const result = await response.json();
 
             if (result.success) {
-                renderizarEspacios(result.data.espacios);
-                renderizarProyectos(result.data.proyectos);
+                proyectosGlobales = result.data.proyectos;
                 
-                // Actualizar contadores rápidos
-                document.getElementById('stat-projects').innerText = result.data.proyectos.length;
+                renderizarEspacios(result.data.espacios);
+                // Al inicio mostramos todos
+                renderizarProyectos(proyectosGlobales);
             }
         } catch (error) {
             console.error("Error al cargar dashboard:", error);
-            document.getElementById('tabla-proyectos').innerHTML = '<tr><td colspan="5" style="color:red">Error al conectar con la base de datos.</td></tr>';
+            document.getElementById('tabla-proyectos').innerHTML = '<tr><td colspan="5" style="color:red">Error de conexión.</td></tr>';
         }
     }
 
     function renderizarEspacios(espacios) {
         const container = document.getElementById('lista-espacios');
-        if (espacios.length === 0) {
-            container.innerHTML = '<p style="padding:10px 20px; font-size:0.8rem;">No hay espacios creados.</p>';
-            return;
+        
+        // Opción inicial para ver todo
+        let html = `
+            <div class="tree-item active" onclick="filtrarPorEspacio('TODOS', this, 'Todos los Proyectos')">
+                <i class="fas fa-layer-group"></i> MOSTRAR TODO
+            </div>
+        `;
+
+        if (espacios.length > 0) {
+            html += espacios.map(esp => `
+                <div class="tree-item" onclick="filtrarPorEspacio('${esp[0]}', this, '${esp[2]}')">
+                    <i class="fas fa-folder" style="color: #f59e0b;"></i> ${esp[2]}
+                </div>
+            `).join('');
+        } else {
+            html = '<p style="padding:10px 20px; font-size:0.8rem;">Sin espacios creados.</p>';
         }
 
-        container.innerHTML = espacios.map(esp => `
-            <div class="tree-item">
-                <i class="fas fa-folder" style="color: #f59e0b;"></i> ${esp[2]}
-            </div>
-        `).join('');
+        container.innerHTML = html;
+    }
+
+    // FUNCIÓN DE FILTRADO
+    function filtrarPorEspacio(idEspacio, elemento, nombreEspacio) {
+        // 1. Actualizar estado visual en la sidebar
+        document.querySelectorAll('.tree-item').forEach(el => el.classList.remove('active'));
+        elemento.classList.add('active');
+
+        // 2. Actualizar títulos
+        document.getElementById('titulo-seccion').innerText = nombreEspacio;
+        document.getElementById('subtitulo-seccion').innerText = 
+            idEspacio === 'TODOS' ? 'Listado general de relevamientos' : `Proyectos en el espacio ${nombreEspacio}`;
+
+        // 3. Filtrar lógica
+        if (idEspacio === 'TODOS') {
+            renderizarProyectos(proyectosGlobales);
+        } else {
+            // p[1] es la columna id_espacio en la hoja proyectos
+            const filtrados = proyectosGlobales.filter(p => p[1] === idEspacio);
+            renderizarProyectos(filtrados);
+        }
     }
 
     function renderizarProyectos(proyectos) {
         const container = document.getElementById('tabla-proyectos');
+        document.getElementById('stat-projects').innerText = proyectos.length;
+
         if (proyectos.length === 0) {
-            container.innerHTML = '<tr><td colspan="5" style="text-align:center;">No tienes proyectos registrados aún.</td></tr>';
+            container.innerHTML = '<tr><td colspan="5" style="text-align:center;">No hay proyectos para mostrar.</td></tr>';
             return;
         }
 
@@ -122,7 +173,6 @@
         `).join('');
     }
 
-    // Al cargar la página, inicializamos todo
     window.onload = () => {
         if (typeof inicializarInterfaz === 'function') inicializarInterfaz();
         cargarDashboard();
