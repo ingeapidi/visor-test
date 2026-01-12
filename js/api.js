@@ -53,3 +53,21 @@ async function registrarArchivoEnSupabase(metadata) {
     if (error) throw error;
     return data;
 }
+
+// Añadir a js/api.js
+async function registrarUsuario(email, password, nombre, empresa) {
+    const { data, error } = await supabase.auth.signUp({
+        email: email,
+        password: password,
+        options: {
+            // Guardamos metadatos adicionales en el perfil de Auth
+            data: {
+                nombre_completo: nombre,
+                empresa: empresa
+            }
+        }
+    });
+
+    if (error) throw error;
+    return data;
+}
