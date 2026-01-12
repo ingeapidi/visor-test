@@ -2,39 +2,22 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>GIS Expert Cloud</title>
-    <link href="https://releases.transloadit.com/uppy/v3.0.0/uppy.min.css" rel="stylesheet">
-    <link href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css" rel="stylesheet">
-    <style>
-        body { display: flex; height: 100vh; margin: 0; font-family: sans-serif; background: #f0f2f5; }
-        #sidebar { width: 380px; padding: 20px; border-right: 1px solid #ddd; background: #fff; display: flex; flex-direction: column; }
-        #map { flex: 1; }
-        .file-item { display: flex; background: #f8f9fa; border: 1px solid #eee; margin-bottom: 8px; padding: 12px; border-radius: 8px; align-items: center; justify-content: space-between; }
-        .actions { display: flex; gap: 6px; }
-        .btn-eye { cursor: pointer; border: 1px solid #ccc; background: #fff; padding: 6px 12px; border-radius: 4px; font-size: 16px; }
-        .btn-dl { background: #2c3e50; color: white; padding: 6px 10px; text-decoration: none; border-radius: 4px; font-size: 11px; font-weight: bold; align-self: center; }
-        #mdt-legend { margin-top: auto; padding: 15px; background: #f9f9f9; border-radius: 8px; border: 1px solid #eee; display: none; }
-        .ramp { height: 12px; background: linear-gradient(to right, blue, cyan, green, yellow, red); border-radius: 6px; margin: 10px 0; }
-    </style>
+    <title>Login - Geoportal Cloud</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
-<body>
-    <div id="sidebar">
-        <h2 style="color:#1a73e8; margin-top:0;">GIS Cloud Engine</h2>
-        <div id="drag-drop-area"></div>
-        <p id="status-text" style="color:#28a745; font-weight:bold; margin-top:15px;">Listo.</p>
-        <ul id="file-list" style="list-style:none; padding:0; flex-grow:1; overflow-y:auto;"></ul>
-        <div id="mdt-legend">
-            <strong>Escala MDT</strong>
-            <div class="ramp"></div>
-            <div style="display:flex; justify-content:space-between; font-size:11px;">
-                <span id="z-min">0m</span><span id="z-max">100m</span>
-            </div>
+<body style="display: flex; align-items: center; justify-content: center; height: 100vh;">
+
+    <div class="card" style="width: 100%; max-width: 400px; text-align: center;">
+        <div class="logo" style="justify-content: center; margin-bottom: 20px;">
+            <i class="fas fa-satellite-dish"></i> GEOPORTAL CLOUD
         </div>
+        <h2 style="margin-bottom: 25px;">Acceso al Sistema</h2>
+        <input type="email" placeholder="Correo electrónico" style="width:100%; padding:12px; margin-bottom:15px; border:1px solid #cbd5e1; border-radius:8px; box-sizing:border-box;">
+        <input type="password" placeholder="Contraseña" style="width:100%; padding:12px; margin-bottom:20px; border:1px solid #cbd5e1; border-radius:8px; box-sizing:border-box;">
+        
+        <a href="inicio.html" class="btn btn-primary" style="width:100%; justify-content: center;">INGRESAR</a>
     </div>
-    <div id="map"></div>
-    <script src="https://releases.transloadit.com/uppy/v3.0.0/uppy.min.js"></script>
-    <script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/geotiff"></script>
-    <script src="script.js"></script>
+
 </body>
 </html>
