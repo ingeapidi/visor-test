@@ -1,1 +1,10 @@
+name = "Suite GNSS Universal"
+description = "Conversor de coordenadas y corrector geoidal"
+version = "1.0.0"
 
+# Aquí listamos las librerías que necesitamos
+packages = ["pyproj", "pandas"]
+
+# Definimos que el código principal está en main.py
+[[fetch]]
+files = ["main.py"]
